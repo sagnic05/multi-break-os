@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syntax Crush V4.0 | Multi-Break OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
+    
+    <style>
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none; }
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
+        .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
+        
+        #game-container { max-width: 900px; margin: 40px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
+        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; }
+        
+        .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
+        .score-badge { color: #4facfe; border-color: rgba(79, 172, 254, 0.4);}
+        .target-badge { color: #fa709a; border-color: rgba(250, 112, 154, 0.4);}
+
+        .board-wrapper { display: flex; justify-content: center; align-items: center; margin-top: 20px; }
+        .crush-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 6px; width: 100%; max-width: 550px; aspect-ratio: 1 / 1; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 15px; box-shadow: 0 15px 40px rgba(31, 38, 135, 0.1), inset 0 0 20px rgba(255,255,255,0.3); position: relative; }
+
+        .crush-block { width: 100%; height: 100%; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 0 10px rgba(255,255,255,0.3); transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s; position: relative; }
+        .crush-block.selected { transform: scale(1.1); box-shadow: 0 0 20px #fff, inset 0 0 15px rgba(255,255,255,0.8); z-index: 10; border: 2px solid white; }
+
+        .block-icon { font-size: 1.8rem; margin-bottom: 2px; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .block-syntax { font-family: 'Fira Code', monospace; font-size: 0.65rem; font-weight: 800; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+        .type-0 { background: linear-gradient(135deg, #fa709a, #fee140); border: 1px solid #fa709a; } 
+        .type-1 { background: linear-gradient(135deg, #4facfe, #00f2fe); border: 1px solid #4facfe; } 
+        .type-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); border: 1px solid #43e97b; } 
+        .type-3 { background: linear-gradient(135deg, #b224ef, #7579ff); border: 1px solid #b224ef; } 
+        .type-4 { background: linear-gradient(135deg, #ff0844, #ffb199); border: 1px solid #ff0844; } 
+
+        @keyframes popOut { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.8; filter: brightness(1.5); } 100% { transform: scale(0); opacity: 0; } }
+        .anim-pop { animation: popOut 0.3s ease-out forwards; }
+
+        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.9rem; }
+        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
+
+        @media (max-width: 600px) { .crush-board { padding: 8px; gap: 4px; } .block-icon { font-size: 1.2rem; } .block-syntax { font-size: 0.5rem; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shape shape-1"></div><div class="bg-shape shape-2"></div><div class="bg-shape shape-3"></div>
+
+    <div id="game-container">
+        <div class="game-header">
+            <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
+            <div class="sys-stats">
+                <div class="stat-box env-badge">ENV: <span id="ui-env">BOOTING</span></div>
+                <div class="stat-box score-badge">ALLOCATED: <span id="ui-score">0</span> BYTES</div>
+                <div class="stat-box target-badge">QUOTA: 1500 BYTES</div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="text-align: center; padding: 25px;">
+            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-cubes-stacked" style="color: #4facfe;"></i> SYNTAX CRUSH V4.0</h2>
+            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Swap adjacent data types to compile blocks of 3 or more. Fulfill the byte quota.</p>
+        </div>
+
+        <div class="board-wrapper">
+            <div class="crush-board" id="crush-board"></div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.2); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6);">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(67,233,123,0.4);"><i class="fa-solid fa-server"></i> QUOTA MET</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">Compiler sequence successful.<br>Memory safely allocated.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border: none; padding: 15px 35px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(67, 233, 123, 0.4);" onclick="window.location.href='index.html'">RETURN TO OS</button>
+        </div>
+    </div>
+
+    <!-- AUDIO ENGINE -->
+    <script src="audio-manager.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const typeDefs = { python: [ {name: 'str', icon: 'fa-quote-right'}, {name: 'int', icon: 'fa-hashtag'}, {name: 'bool', icon: 'fa-toggle-on'}, {name: 'float', icon: 'fa-percent'}, {name: 'list', icon: 'fa-list'} ], java: [ {name: 'String', icon: 'fa-quote-right'}, {name: 'int', icon: 'fa-hashtag'}, {name: 'boolean', icon: 'fa-toggle-on'}, {name: 'double', icon: 'fa-percent'}, {name: 'char', icon: 'fa-a'} ], javascript: [ {name: 'String', icon: 'fa-quote-right'}, {name: 'Number', icon: 'fa-hashtag'}, {name: 'Boolean', icon: 'fa-toggle-on'}, {name: 'Float', icon: 'fa-percent'}, {name: 'Array', icon: 'fa-list'} ], cpp: [ {name: 'string', icon: 'fa-quote-right'}, {name: 'int', icon: 'fa-hashtag'}, {name: 'bool', icon: 'fa-toggle-on'}, {name: 'float', icon: 'fa-percent'}, {name: 'char', icon: 'fa-a'} ], kotlin: [ {name: 'String', icon: 'fa-quote-right'}, {name: 'Int', icon: 'fa-hashtag'}, {name: 'Boolean', icon: 'fa-toggle-on'}, {name: 'Double', icon: 'fa-percent'}, {name: 'List', icon: 'fa-list'} ] };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentLang = (urlParams.get('lang') && typeDefs[urlParams.get('lang')]) ? urlParams.get('lang') : 'python';
+            document.getElementById('ui-env').innerText = currentLang.toUpperCase();
+            const blocksData = typeDefs[currentLang];
+
+            const width = 8; const targetScore = 1500; let score = 0; let grid = []; let selectedBlock = null; let isProcessing = false; 
+
+            const boardContainer = document.getElementById('crush-board'); const scoreDisplay = document.getElementById('ui-score'); const victoryModal = document.getElementById('victory-modal');
+
+            function createBoard() {
+                for (let r = 0; r < width; r++) {
+                    let row = [];
+                    for (let c = 0; c < width; c++) { let block = createRandomBlock(r, c); row.push(block); boardContainer.appendChild(block); }
+                    grid.push(row);
+                }
+                setTimeout(() => { resolveMatches(true); }, 100);
+            }
+
+            function createRandomBlock(r, c) {
+                let block = document.createElement('div'); let randomType = Math.floor(Math.random() * 5); 
+                block.className = `crush-block type-${randomType}`; block.dataset.r = r; block.dataset.c = c; block.dataset.type = randomType;
+                block.innerHTML = `<i class="fa-solid ${blocksData[randomType].icon} block-icon"></i><span class="block-syntax">${blocksData[randomType].name}</span>`;
+                block.addEventListener('click', onBlockClick); return block;
+            }
+
+            function onBlockClick() {
+                if (isProcessing) return;
+                if (!selectedBlock) { selectedBlock = this; this.classList.add('selected'); } 
+                else if (selectedBlock === this) { selectedBlock.classList.remove('selected'); selectedBlock = null; } 
+                else {
+                    let r1 = parseInt(selectedBlock.dataset.r); let c1 = parseInt(selectedBlock.dataset.c);
+                    let r2 = parseInt(this.dataset.r); let c2 = parseInt(this.dataset.c);
+                    let isAdjacent = (Math.abs(r1 - r2) === 1 && c1 === c2) || (Math.abs(c1 - c2) === 1 && r1 === r2);
+
+                    if (isAdjacent) {
+                        selectedBlock.classList.remove('selected'); swapBlocks(selectedBlock, this); selectedBlock = null; isProcessing = true;
+                        setTimeout(() => {
+                            let matchesFound = resolveMatches(false);
+                            if (!matchesFound) { setTimeout(() => { let b1 = grid[r1][c1]; let b2 = grid[r2][c2]; swapBlocks(b1, b2); isProcessing = false; }, 300); }
+                        }, 300); 
+                    } else { selectedBlock.classList.remove('selected'); selectedBlock = this; this.classList.add('selected'); }
+                }
+            }
+
+            function swapBlocks(b1, b2) {
+                let r1 = parseInt(b1.dataset.r); let c1 = parseInt(b1.dataset.c); let r2 = parseInt(b2.dataset.r); let c2 = parseInt(b2.dataset.c);
+                grid[r1][c1] = b2; grid[r2][c2] = b1;
+                b1.dataset.r = r2; b1.dataset.c = c2; b2.dataset.r = r1; b2.dataset.c = c1;
+                b1.style.gridRow = r2 + 1; b1.style.gridColumn = c2 + 1; b2.style.gridRow = r1 + 1; b2.style.gridColumn = c1 + 1;
+            }
+
+            function initGridPositions() { for(let r=0; r<width; r++){ for(let c=0; c<width; c++){ grid[r][c].style.gridRow = r + 1; grid[r][c].style.gridColumn = c + 1; } } }
+
+            function resolveMatches(isSilentInitial) {
+                let matchedSet = new Set();
+                for (let r = 0; r < width; r++) {
+                    for (let c = 0; c < width - 2; c++) {
+                        let type1 = grid[r][c].dataset.type; let type2 = grid[r][c+1].dataset.type; let type3 = grid[r][c+2].dataset.type;
+                        if (type1 === type2 && type2 === type3) {
+                            matchedSet.add(grid[r][c]); matchedSet.add(grid[r][c+1]); matchedSet.add(grid[r][c+2]);
+                            if (c+3 < width && grid[r][c+3].dataset.type === type1) matchedSet.add(grid[r][c+3]);
+                            if (c+4 < width && grid[r][c+4].dataset.type === type1) matchedSet.add(grid[r][c+4]);
+                        }
+                    }
+                }
+                for (let c = 0; c < width; c++) {
+                    for (let r = 0; r < width - 2; r++) {
+                        let type1 = grid[r][c].dataset.type; let type2 = grid[r+1][c].dataset.type; let type3 = grid[r+2][c].dataset.type;
+                        if (type1 === type2 && type2 === type3) {
+                            matchedSet.add(grid[r][c]); matchedSet.add(grid[r+1][c]); matchedSet.add(grid[r+2][c]);
+                            if (r+3 < width && grid[r+3][c].dataset.type === type1) matchedSet.add(grid[r+3][c]);
+                            if (r+4 < width && grid[r+4][c].dataset.type === type1) matchedSet.add(grid[r+4][c]);
+                        }
+                    }
+                }
+                if (matchedSet.size > 0) { processMatches(matchedSet, isSilentInitial); return true; } 
+                else { isProcessing = false; return false; }
+            }
+
+            function processMatches(matchedSet, isSilentInitial) {
+                if (!isSilentInitial) {
+                    score += (matchedSet.size * 10); scoreDisplay.innerText = score;
+                    if(score >= targetScore) {
+                        
+                        // --- SAVE & AUDIO TRIGGER ---
+                        AudioEngine.playSound('success');
+                        AudioEngine.saveProgress('Crush Score', score);
+                        setTimeout(() => { victoryModal.style.display = 'flex'; }, 800);
+                    }
+                }
+                matchedSet.forEach(block => {
+                    if (!isSilentInitial) block.classList.add('anim-pop');
+                    let r = parseInt(block.dataset.r); let c = parseInt(block.dataset.c); grid[r][c] = null; 
+                    setTimeout(() => { block.remove(); }, isSilentInitial ? 0 : 300);
+                });
+                setTimeout(() => { dropBlocks(isSilentInitial); }, isSilentInitial ? 0 : 350);
+            }
+
+            function dropBlocks(isSilentInitial) {
+                for (let c = 0; c < width; c++) {
+                    let emptySpaces = 0;
+                    for (let r = width - 1; r >= 0; r--) {
+                        if (grid[r][c] === null) { emptySpaces++; } 
+                        else if (emptySpaces > 0) {
+                            let block = grid[r][c]; let newR = r + emptySpaces;
+                            grid[newR][c] = block; grid[r][c] = null;
+                            block.dataset.r = newR; block.style.gridRow = newR + 1;
+                        }
+                    }
+                }
+                for (let c = 0; c < width; c++) {
+                    for (let r = 0; r < width; r++) {
+                        if (grid[r][c] === null) {
+                            let newBlock = createRandomBlock(r, c); newBlock.style.gridRow = r + 1; newBlock.style.gridColumn = c + 1;
+                            grid[r][c] = newBlock; boardContainer.appendChild(newBlock);
+                        }
+                    }
+                }
+                setTimeout(() => { resolveMatches(isSilentInitial); }, isSilentInitial ? 0 : 400);
+            }
+
+            createBoard(); initGridPositions();
+        });
+    </script>
+</body>
+</html>

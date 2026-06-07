@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Defender | Multi-Break OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
+    
+    <style>
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none; overflow: hidden;}
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
+        .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
+        
+        #game-wrapper { max-width: 900px; margin: 20px auto; position: relative; z-index: 10; padding: 0 20px; display: flex; flex-direction: column; height: 90vh;}
+        
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .sys-stats { display: flex; gap: 10px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
+        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.9rem; }
+        
+        .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
+        .score-badge { color: #4facfe; border-color: rgba(79, 172, 254, 0.4);}
+        .hp-badge { color: #43e97b; border-color: rgba(67, 233, 123, 0.4); transition: color 0.3s, border-color 0.3s;}
+        .hp-badge.danger { color: #ff0844; border-color: #ff0844; animation: pulseBlink 0.5s infinite;}
+
+        /* Start Screen Panel */
+        .start-panel { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05), inset 0 0 15px rgba(255,255,255,0.3); text-align: center; margin-top: 40px;}
+        .mode-container { display: flex; justify-content: center; gap: 20px; margin-top: 25px; flex-wrap: wrap;}
+        
+        /* Action Buttons */
+        .action-btn { background: rgba(255,255,255,0.5); border: 2px solid; padding: 15px 30px; border-radius: 12px; font-family: 'Fira Code', monospace; font-weight: 900; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
+        .btn-cyan { border-color: #4facfe; color: #0f4c75; } .btn-cyan:hover { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);}
+        .btn-pink { border-color: #fa709a; color: #5c182d; } .btn-pink:hover { background: linear-gradient(135deg, #fa709a, #fee140); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(250, 112, 154, 0.4);}
+
+        /* Arcade Arena */
+        .arena { flex-grow: 1; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); border-radius: 16px 16px 0 0; position: relative; overflow: hidden; display: none; box-shadow: inset 0 0 20px rgba(255,255,255,0.3); }
+        
+        .core-container { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.3); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.8); padding: 15px; box-sizing: border-box;}
+        .core-bar { width: 80%; height: 10px; background: linear-gradient(90deg, #4facfe, #00f2fe); border-radius: 5px; margin-bottom: 15px; box-shadow: 0 0 15px rgba(0, 242, 254, 0.5); transition: width 0.3s ease, background 0.3s ease; }
+        
+        .input-row { display: flex; align-items: center; width: 100%; max-width: 500px; background: rgba(255,255,255,0.6); padding: 10px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.9); box-shadow: inset 0 0 8px rgba(0,0,0,0.05);}
+        .input-prompt { color: #b224ef; font-family: 'Fira Code', monospace; font-weight: 900; margin-right: 15px; }
+        .combat-input { flex-grow: 1; background: transparent; border: none; color: #1a202c; font-family: 'Fira Code', monospace; font-size: 1.2rem; font-weight: 800; outline: none; }
+
+        /* Viruses */
+        .virus { position: absolute; background: rgba(255, 255, 255, 0.9); border: 2px solid; padding: 10px 15px; font-family: 'Fira Code', monospace; font-weight: 800; border-radius: 8px; text-align: center; transform: translateX(-50%); transition: top 0.1s linear; max-width: 250px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); font-size: 0.95rem;}
+        .virus-red { border-color: #ff0844; color: #ff0844; }
+        .virus-green { border-color: #43e97b; color: #43e97b; border-style: dashed; }
+
+        /* Laser & Explosions */
+        .laser { position: absolute; width: 6px; background: #00f2fe; box-shadow: 0 0 15px #00f2fe, 0 0 5px #fff; left: 50%; transform: translateX(-50%); z-index: 50; border-radius: 3px;}
+        @keyframes shootLaser { 0% { bottom: 80px; height: 0; opacity: 1;} 50% { height: 100vh; opacity: 1;} 100% { bottom: 100vh; height: 0; opacity: 0;} }
+        
+        .explosion { position: absolute; font-size: 2.5em; transform: translate(-50%, -50%); animation: explodeOut 0.4s forwards; z-index: 60; pointer-events: none;}
+        @keyframes explodeOut { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2); } }
+
+        @keyframes flashDamage { 0% { background-color: rgba(255, 8, 68, 0.2); } 100% { background-color: transparent; } }
+        @keyframes flashHeal { 0% { background-color: rgba(67, 233, 123, 0.2); } 100% { background-color: transparent; } }
+        
+        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; transition: all 0.3s ease; font-size: 0.85rem; }
+        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; transform: translateY(-2px); }
+
+        @media (max-width: 600px) { .input-row { flex-direction: column; text-align: center; } .combat-input { text-align: center; margin-top: 10px;} .virus {font-size: 0.75rem; padding: 8px;}}
+    </style>
+</head>
+<body onclick="initAudio()">
+
+    <div class="bg-shape shape-1"></div><div class="bg-shape shape-2"></div><div class="bg-shape shape-3"></div>
+
+    <div id="game-wrapper">
+        <div class="game-header">
+            <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
+            <div class="sys-stats" translate="no">
+                <div class="stat-box env-badge">MODE: <span id="ui-mode">STANDBY</span></div>
+                <div class="stat-box score-badge">SCORE: <span id="score">0</span></div>
+                <div class="stat-box hp-badge" id="hp-box">CORE HP: <span id="hp">100</span>%</div>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div class="start-panel" id="start-screen">
+            <h2 style="color: #1a202c; font-size: 2rem; margin-bottom: 10px; font-weight: 900;"><i class="fa-solid fa-shield-halved" style="color: #4facfe;"></i> CORE DEFENDER</h2>
+            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; line-height: 1.6; margin-bottom: 20px;">> Defend the system core from falling data-viruses.</p>
+            
+            <div style="background: rgba(255,255,255,0.4); padding: 15px; border-radius: 12px; display: inline-block; text-align: left; font-family: 'Fira Code', monospace; font-size: 0.9rem; color: #1a202c; border: 1px solid rgba(255,255,255,0.8);">
+                <span style="color: #4facfe; font-weight: bold;">Shoot Red Virus = +10 Points</span><br>
+                <span style="color: #43e97b; font-weight: bold;">Let Green Virus hit core = +25% HP Heal</span><br>
+                <span style="color: #ff0844; font-weight: bold;">Red Virus Hits Core = -10 DMG</span>
+            </div>
+
+            <div class="mode-container">
+                <button class="action-btn btn-cyan" onclick="startGame('syntax')">INITIATE SYNTAX MODE</button>
+                <button class="action-btn btn-pink" onclick="startGame('bitwise')">INITIATE BITWISE MODE</button>
+            </div>
+        </div>
+
+        <!-- Game Arena -->
+        <div class="arena" id="game-area">
+            <div class="core-container">
+                <div class="core-bar" id="core-bar"></div>
+                <div class="input-row">
+                    <span class="input-prompt">> TARGET VAL:</span>
+                    <input type="text" id="answer-input" class="combat-input" autocomplete="off" spellcheck="false">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.2); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6); background: rgba(255,255,255,0.9); border-radius: 16px;">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900;"><i class="fa-solid fa-medal"></i> CORE SECURED</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">Final Score: <span id="win-score">0</span><br>You have successfully defended the mainframe.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c; border: none; padding: 15px 35px; font-size: 1.1rem;" onclick="window.location.href='index.html'">RETURN TO OS HUB</button>
+        </div>
+    </div>
+
+    <div id="defeat-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid #ff0844; box-shadow: 0 20px 60px rgba(255,8,68, 0.4), inset 0 0 30px rgba(255,8,68,0.3); background: rgba(255,255,255,0.95); border-radius: 16px;">
+            <h2 style="color: #ff0844; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900;"><i class="fa-solid fa-triangle-exclamation"></i> CORE BREACHED</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">Final Score: <span id="lose-score">0</span><br>The system was corrupted.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #ff0844, #ffb199); color: white; border: none; padding: 15px 35px; font-size: 1.1rem;" onclick="location.reload()">REBOOT SECTOR</button>
+        </div>
+    </div>
+
+    <script src="audio-manager.js"></script>
+
+    <script>
+        // Synthesized sounds specifically for gameplay (lasers/explosions)
+        let audioCtx = null;
+        function initAudio() { 
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            if(audioCtx.state === 'suspended') audioCtx.resume(); 
+        }
+
+        function playGameSound(type) {
+            try {
+                if (!audioCtx || audioCtx.state === 'suspended') return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                
+                if (type === 'laser') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
+                else if (type === 'hit') { osc.type = 'square'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.2); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2); osc.start(now); osc.stop(now + 0.2); } 
+                else if (type === 'damage') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now + 0.4); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.4); osc.start(now); osc.stop(now + 0.4); } 
+                else if (type === 'error') { osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.15); osc.start(now); osc.stop(now + 0.15); } 
+                else if (type === 'heal') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(800, now + 0.3); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
+            } catch (error) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+            
+            let isPlaying = false;
+            let score = 0;
+            let coreHp = 100;
+            let enemies = [];
+            let spawnRate = 3500; 
+            let lastSpawn = 0;
+            let animationId;
+            let hasWon = false;
+            let gameMode = 'syntax';
+
+            const elInput = document.getElementById('answer-input');
+            const gameArea = document.getElementById('game-area');
+            const elScore = document.getElementById('score');
+            const elHp = document.getElementById('hp');
+            const hpBox = document.getElementById('hp-box');
+            const elCoreBar = document.getElementById('core-bar');
+            const elModeDisplay = document.getElementById('ui-mode');
+            const startScreen = document.getElementById('start-screen');
+
+            // Exact C-Break Question Bank ported directly
+            const questionBank = [
+                { text: "Format specifier for integer?", answer: "%d" }, { text: "Format specifier for float?", answer: "%f" },
+                { text: "Format specifier for character?", answer: "%c" }, { text: "Format specifier for string?", answer: "%s" },
+                { text: "Symbol for 'Address of'?", answer: "&" }, { text: "Symbol for pointer dereference?", answer: "*" },
+                { text: "Header file for printf/scanf?", answer: "stdio.h" }, { text: "Keyword to return a value?", answer: "return" },
+                { text: "Keyword to exit a loop instantly?", answer: "break" }, { text: "Keyword to skip loop iteration?", answer: "continue" },
+                { text: "Operator for Logical AND?", answer: "&&" }, { text: "Operator for Logical OR?", answer: "||" },
+                { text: "Operator for Equality?", answer: "==" }, { text: "Operator for Not Equal?", answer: "!=" },
+                { text: "First index of an array?", answer: "0" }, { text: "Function to dynamically allocate memory?", answer: "malloc" },
+                { text: "Function to free allocated memory?", answer: "free" }, { text: "Symbol to terminate a statement?", answer: ";" },
+                { text: "Size of char in bytes?", answer: "1" }, { text: "Keyword for custom data structure?", answer: "struct" },
+                { text: "Function to print to console?", answer: "printf" }, { text: "Function to read from console?", answer: "scanf" },
+                { text: "Keyword for an empty return type?", answer: "void" }
+            ];
+
+            function generateExpression() {
+                if (gameMode === 'syntax') {
+                    return questionBank[Math.floor(Math.random() * questionBank.length)];
+                } else {
+                    const ops = ['&', '|', '^', '<<', '>>'];
+                    const op = ops[Math.floor(Math.random() * ops.length)];
+                    let a, b, ans;
+                    if(op === '<<' || op === '>>') {
+                        a = Math.floor(Math.random() * 16) + 1; b = Math.floor(Math.random() * 3) + 1;  
+                        ans = op === '<<' ? (a << b) : (a >> b);
+                    } else {
+                        a = Math.floor(Math.random() * 15); b = Math.floor(Math.random() * 15);
+                        ans = op === '&' ? (a & b) : op === '|' ? (a | b) : (a ^ b);
+                    }
+                    return { text: `${a} ${op} ${b}`, answer: ans.toString() };
+                }
+            }
+
+            function spawnEnemy() {
+                const data = generateExpression();
+                const el = document.createElement('div');
+                const isHealer = Math.random() < 0.15; 
+                
+                el.className = `virus ${isHealer ? 'virus-green' : 'virus-red'}`;
+                el.innerText = data.text;
+                
+                const startX = 15 + Math.random() * 70;
+                el.style.left = `${startX}%`;
+                el.style.top = '-100px'; 
+                
+                gameArea.appendChild(el);
+                
+                let baseSpeed = gameMode === 'bitwise' ? 0.6 : 0.5;
+                let speedMult = gameMode === 'bitwise' ? 0.005 : 0.003;
+                let finalSpeed = isHealer ? (baseSpeed - 0.1) : (baseSpeed + Math.random() * 0.4 + (score * speedMult));
+
+                enemies.push({ el: el, answer: data.answer.toLowerCase(), y: -100, speed: finalSpeed, isHealer: isHealer });
+            }
+
+            function gameLoop(timestamp) {
+                if(!isPlaying) return;
+
+                if(timestamp - lastSpawn > spawnRate) {
+                    spawnEnemy();
+                    lastSpawn = timestamp;
+                    let minSpawn = gameMode === 'bitwise' ? 1000 : 1500;
+                    if(spawnRate > minSpawn) spawnRate -= 15; 
+                }
+
+                // Dynamic height calculation to hit the core input box correctly
+                const coreThreshold = gameArea.clientHeight - 80; 
+
+                for(let i = enemies.length - 1; i >= 0; i--) {
+                    let e = enemies[i];
+                    e.y += e.speed;
+                    e.el.style.top = `${e.y}px`;
+
+                    if(e.y > coreThreshold) {
+                        e.el.remove();
+                        enemies.splice(i, 1);
+                        
+                        if(e.isHealer) {
+                            playGameSound('heal');
+                            coreHp = Math.min(100, coreHp + 25);
+                            gameArea.style.animation = 'none'; void gameArea.offsetWidth;
+                            gameArea.style.animation = 'flashHeal 0.5s ease-out';
+                        } else {
+                            playGameSound('damage');
+                            coreHp -= 10;
+                            gameArea.style.animation = 'none'; void gameArea.offsetWidth;
+                            gameArea.style.animation = 'flashDamage 0.5s ease-out';
+                        }
+                        updateHUD();
+                    }
+                }
+
+                if(coreHp <= 0) {
+                    endGame(false);
+                } else {
+                    animationId = requestAnimationFrame(gameLoop);
+                }
+            }
+
+            window.fireLaser = async function() {
+                if(!isPlaying) return;
+                const val = elInput.value.trim().toLowerCase();
+                elInput.value = '';
+                if(val === '') return;
+
+                let targetIdx = -1;
+                let lowestY = -100;
+                
+                for(let i=0; i<enemies.length; i++) {
+                    if(enemies[i].answer === val && enemies[i].y > lowestY) {
+                        targetIdx = i; lowestY = enemies[i].y;
+                    }
+                }
+
+                if(targetIdx > -1) {
+                    const target = enemies[targetIdx];
+                    
+                    const laser = document.createElement('div');
+                    laser.className = 'laser';
+                    laser.style.left = target.el.style.left;
+                    laser.style.animation = 'shootLaser 0.2s forwards';
+                    gameArea.appendChild(laser);
+                    playGameSound('laser');
+
+                    enemies.splice(targetIdx, 1);
+
+                    await sleep(100); 
+                    
+                    playGameSound('hit');
+                    const boom = document.createElement('div');
+                    boom.className = 'explosion';
+                    boom.innerText = '💥';
+                    boom.style.left = target.el.style.left;
+                    boom.style.top = `${target.y}px`;
+                    gameArea.appendChild(boom);
+                    
+                    target.el.remove();
+                    setTimeout(() => { laser.remove(); boom.remove(); }, 300);
+
+                    if(!target.isHealer) {
+                        score += 10;
+                        checkVictory();
+                    } else {
+                        playGameSound('error');
+                        score = Math.max(0, score - 5);
+                    }
+                    updateHUD();
+                } else {
+                    playGameSound('error');
+                }
+            }
+
+            function updateHUD() {
+                elScore.innerText = score;
+                elHp.innerText = coreHp;
+                elCoreBar.style.width = `${Math.max(0, coreHp)}%`;
+                
+                if (coreHp < 30) {
+                    elCoreBar.style.background = "linear-gradient(90deg, #ff0844, #fa709a)";
+                    hpBox.classList.add('danger');
+                } else {
+                    elCoreBar.style.background = "linear-gradient(90deg, #4facfe, #00f2fe)";
+                    hpBox.classList.remove('danger');
+                }
+            }
+
+            function checkVictory() {
+                if(score >= 200 && !hasWon) {
+                    hasWon = true;
+                    
+                    // -- AUDIO & SAVE PROGRESS TO HUB --
+                    if(typeof AudioEngine !== 'undefined') {
+                        AudioEngine.playSound('success');
+                        AudioEngine.saveProgress('Arcade Score', score);
+                    }
+
+                    setTimeout(() => { endGame(true); }, 1000); 
+                }
+            }
+
+            window.startGame = function(selectedMode) {
+                initAudio();
+                if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                
+                gameMode = selectedMode;
+                elModeDisplay.innerText = gameMode.toUpperCase();
+                
+                startScreen.style.display = 'none';
+                gameArea.style.display = 'block';
+                
+                enemies = [];
+                score = 0;
+                coreHp = 100;
+                spawnRate = gameMode === 'syntax' ? 3500 : 3000; 
+                hasWon = false;
+                isPlaying = true;
+                
+                updateHUD();
+                elInput.focus();
+                
+                lastSpawn = performance.now();
+                animationId = requestAnimationFrame(gameLoop);
+            }
+
+            function endGame(victory) {
+                isPlaying = false;
+                cancelAnimationFrame(animationId);
+                
+                // Final save check just in case
+                if(typeof AudioEngine !== 'undefined') {
+                    const savedScore = AudioEngine.loadProgress('Arcade Score') || 0;
+                    if(score > savedScore) {
+                        AudioEngine.saveProgress('Arcade Score', score);
+                    }
+                }
+
+                if(victory) {
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('success');
+                    document.getElementById('win-score').innerText = score;
+                    document.getElementById('victory-modal').style.display = 'flex';
+                } else {
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                    document.getElementById('lose-score').innerText = score;
+                    document.getElementById('defeat-modal').style.display = 'flex';
+                }
+            }
+
+            elInput.addEventListener("keydown", async (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    await fireLaser();
+                }
+            });
+
+            // Keep focus in input box during gameplay
+            document.addEventListener('click', (e) => { 
+                if(isPlaying && e.target.tagName !== 'BUTTON') elInput.focus(); 
+            });
+        });
+    </script>
+</body>
+</html>

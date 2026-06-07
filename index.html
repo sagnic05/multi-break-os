@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Break OS | Aurora Glass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body class="locked">
+
+    <div class="bg-mesh">
+        <div class="mesh-blob blob-1"></div>
+        <div class="mesh-blob blob-2"></div>
+        <div class="mesh-blob blob-3"></div>
+        <div class="mesh-blob blob-4"></div>
+    </div>
+
+    <div id="os-boot-loader">
+        <div class="boot-glass-panel">
+            <i class="fa-solid fa-layer-group boot-icon"></i>
+            <h1 class="boot-title">MULTI-BREAK OS</h1>
+            <p class="boot-status" id="boot-status-text">INITIALIZING KERNEL...</p>
+            <div class="boot-progress-bar"><div class="boot-progress-fill"></div></div>
+        </div>
+    </div>
+
+    <nav class="hub-nav glass-card">
+        <div class="hub-logo"><i class="fa-solid fa-layer-group" style="color: #4facfe;"></i> MULTI-BREAK OS</div>
+        <div class="nav-links">
+            <a href="#whoami">ABOUT</a>
+            <a href="#modules">TRAINING MODULES</a>
+        </div>
+    </nav>
+
+    <main class="hub-container">
+        
+        <section class="hero-section">
+            <h1 class="hero-title">LEARN BY SURVIVING IT</h1>
+            <p class="hero-subtitle">The ultimate gamified environment for syntax mastery.</p>
+            <a href="#whoami" class="down-arrow"><i class="fa-solid fa-arrow-down"></i></a>
+        </section>
+
+        <section id="whoami" class="section-block">
+            <div class="section-title"><span style="color:#4facfe;">>_</span> WHOAMI</div>
+            <div class="terminal-window glass-card">
+                <div class="mac-header">
+                    <span class="mac-dot red"></span>
+                    <span class="mac-dot yellow"></span>
+                    <span class="mac-dot green"></span>
+                </div>
+                <div class="term-body">
+                    <p><span class="term-prompt">admin@server:~$</span> load_profile.sh</p>
+                    <br>
+                    <p>Querying User_ID... <span class="term-highlight">[Sagnic Bhattacharyya]</span></p>
+                    <p>Clearance: Computer Science Engineer (B.Tech, Class of 2027)</p>
+                    <p>Directive: Full-Stack & Android Developer (Kotlin, Spring Boot, Jetpack Compose)</p>
+                    <br>
+                    <p><span class="term-prompt">admin@server:~$</span> <span class="term-cursor">_</span></p>
+                </div>
+            </div>
+            
+            <div class="social-row">
+                <button class="social-btn"><i class="fa-brands fa-github"></i> GITHUB</button>
+                <button class="social-btn"><i class="fa-brands fa-linkedin-in"></i> LINKEDIN</button>
+                <button class="social-btn"><i class="fa-brands fa-instagram"></i> INSTAGRAM</button>
+                <button class="social-btn"><i class="fa-brands fa-x-twitter"></i> TWITTER</button>
+            </div>
+        </section>
+
+        <section class="section-block">
+            <div class="section-header">
+                <div class="section-title"><i class="fa-solid fa-chart-pie" style="color: #4facfe;"></i> USER TELEMETRY</div>
+                <div class="env-selector">
+                    <span style="color: #4facfe;">ENVIRONMENT:</span>
+                    <select id="telemetry-lang-select" class="glass-select">
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="cpp">C++</option>
+                        <option value="kotlin">Kotlin</option>
+                    </select>
+                </div>
+            </div>
+            <div id="telemetry-grid-container" class="telemetry-grid">
+                </div>
+        </section>
+
+        <section id="modules" class="section-block">
+            <div class="section-title"><i class="fa-solid fa-microchip" style="color: #4facfe;"></i> ACTIVE MODULES</div>
+            <div class="modules-grid">
+                
+                <div class="module-card glass-card">
+                    <div class="pill-badge">PURE LEARNING</div>
+                    <h3 class="module-title">Memory Bin Sorter</h3>
+                    <p class="module-desc">A guided visual organizer. Master basic types by routing payloads.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('sorter.html', 'Memory Bin Sorter')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card">
+                    <div class="pill-badge">CRYPTOGRAPHIC DECK</div>
+                    <h3 class="module-title">Syntax Match V4.0</h3>
+                    <p class="module-desc">Decrypt abstract memory buffers by pairing commands and operators.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('match.html', 'Syntax Match V4.0')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card">
+                    <div class="pill-badge">POINTER SANITIZATION</div>
+                    <h3 class="module-title">Heap Away (Arrows)</h3>
+                    <p class="module-desc">Clear the dynamic heap stack and permanently prevent memory leaks.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('heap.html', 'Heap Away')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card">
+                    <div class="pill-badge">ALLOCATION QUOTAS</div>
+                    <h3 class="module-title">Syntax Crush V4.0</h3>
+                    <p class="module-desc">A guided match-3 compiler. Fulfill specific byte quotas for targeted types.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('crush.html', 'Syntax Crush V4.0')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card">
+                    <div class="pill-badge">HARDCORE TRAVERSAL</div>
+                    <h3 class="module-title">Maze Escape</h3>
+                    <p class="module-desc">Navigate an unstable RAM grid using raw pointer arithmetic.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('maze.html', 'Maze Escape')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card">
+                    <div class="pill-badge">LEVEL 1-10</div>
+                    <h3 class="module-title">Syntax Assembler</h3>
+                    <p class="module-desc">Repair fragmented scripts by dragging blocks. Build structural muscle memory.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('assembler.html', 'Syntax Assembler')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card">
+                    <div class="pill-badge">TACTICAL COMBAT</div>
+                    <h3 class="module-title">Kernel Panic: RPG</h3>
+                    <p class="module-desc">Turn-based logic combat. Execute strikes against Syntax Bugs.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('rpg.html', 'Kernel Panic RPG')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card">
+                    <div class="pill-badge">SURVIVAL MODE</div>
+                    <h3 class="module-title">Bitwise Assault</h3>
+                    <p class="module-desc">Defend the core in a high-speed arena using complex bitwise operations.</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('arcade.html', 'Bitwise Assault')">INITIATE</button>
+                </div>
+
+                <div class="module-card glass-card" style="border-color: rgba(255, 8, 68, 0.8); box-shadow: 0 0 25px rgba(255, 8, 68, 0.2), inset 0 0 25px rgba(255,255,255,0.7);">
+                    <div class="pill-badge">ULTIMATE CHALLENGE</div>
+                    <h3 class="module-title">Terminal Escape: IDE</h3>
+                    <p class="module-desc">The ultimate challenge. Write compile-ready programs from scratch!</p>
+                    <button class="initiate-btn" onclick="openLanguageSelect('escape.html', 'Terminal Escape')">INITIATE</button>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="section-block">
+            <div class="section-title"><i class="fa-solid fa-satellite-dish" style="color: #4facfe;"></i> SYSTEM LOGS & FEEDBACK</div>
+            <div class="glass-card feedback-form">
+                <p class="feedback-desc">Transmit field performance data directly to developer uplink.</p>
+                
+                <form id="feedback-form">
+                    <label>OPERATOR HANDLE</label>
+                    <input type="text" id="operator-handle" placeholder="anon@break-os" required>
+
+                    <label style="margin-top: 15px;">SYSTEM RATING</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="rating" value="Buggy"> ⚠️ Buggy</label>
+                        <label><input type="radio" name="rating" value="Stable" checked> ⚡ Stable</label>
+                        <label><input type="radio" name="rating" value="Godlike"> 🔥 Godlike</label>
+                    </div>
+
+                    <label style="margin-top: 15px;">LOG MESSAGE</label>
+                    <textarea placeholder="Report bugs or give feedback..." required></textarea>
+
+                    <button type="submit" class="transmit-btn"><i class="fa-solid fa-paper-plane"></i> TRANSMIT TELEMETRY</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-socials">
+            <a href="#" class="glass-card"><i class="fa-brands fa-github"></i></a>
+            <a href="#" class="glass-card"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="#" class="glass-card"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="glass-card"><i class="fa-brands fa-x-twitter"></i></a>
+        </div>
+        <div class="footer-links">
+            <a href="#whoami">ABOUT OS</a>
+            <a href="#modules">TRAINING MODULES</a>
+            <a href="#">CONTACT DEVELOPER</a>
+        </div>
+        <div class="footer-copy">
+            © 2026 Sagnic Bhattacharyya | All Rights Reserved
+        </div>
+    </footer>
+
+    <div id="language-modal" class="modal-overlay hidden">
+        <div class="modal-box glass-card">
+            <i class="fa-solid fa-xmark close-btn" onclick="closeModals()"></i>
+            <h2 class="modal-title">ENVIRONMENT SETUP</h2>
+            <p class="modal-subtitle" id="modal-game-name">Target: []</p>
+            <button class="lang-btn" onclick="launchBriefing('python')">PYTHON</button>
+            <button class="lang-btn" onclick="launchBriefing('java')">JAVA</button>
+            <button class="lang-btn" onclick="launchBriefing('cpp')">C++</button>
+            <button class="lang-btn" onclick="launchBriefing('javascript')">JAVASCRIPT</button>
+            <button class="lang-btn" onclick="launchBriefing('kotlin')">KOTLIN</button>
+        </div>
+    </div>
+
+    <div id="briefing-modal" class="modal-overlay hidden">
+        <div class="modal-box glass-card">
+            <i class="fa-solid fa-xmark close-btn" onclick="closeModals()"></i>
+            <div class="modal-transmission">> INCOMING TRANSMISSION</div>
+            <h2 id="briefing-title" class="modal-title" style="font-size: 1.8rem;"></h2>
+            <div class="pill-badge" style="margin: 15px auto 20px; display: inline-block;" id="briefing-lang-badge"></div>
+            
+            <p id="briefing-desc" class="briefing-desc"></p>
+            
+            <div id="syntax-warning" class="syntax-warning">
+                <span id="syntax-text" class="syntax-text"></span>
+            </div>
+            
+            <button class="start-btn" onclick="startGame()">EXECUTE MODULE</button>
+        </div>
+    </div>
+
+    <script src="audio-manager.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

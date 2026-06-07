@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heap Away | Multi-Break OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; }
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
+        .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
+        
+        #game-container { max-width: 900px; margin: 40px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
+        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; }
+        .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
+        .score-badge { color: #ff0844; border-color: rgba(255, 8, 68, 0.4);}
+
+        .heap-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 15px; width: 100%; max-width: 500px; margin: 0 auto; padding: 25px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; box-shadow: 0 15px 40px rgba(31, 38, 135, 0.1), inset 0 0 20px rgba(255,255,255,0.3); }
+        .grid-cell { aspect-ratio: 1 / 1; position: relative; display: flex; justify-content: center; align-items: center; }
+
+        .heap-block { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(26, 32, 44, 0.9), rgba(45, 55, 72, 0.9)); border: 2px solid #00f2fe; border-radius: 12px; color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 8px 20px rgba(0, 242, 254, 0.3), inset 0 0 10px rgba(0,0,0,0.5); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; position: absolute; z-index: 20; text-shadow: 0 0 8px rgba(0,242,254,0.5); }
+        .heap-block:hover { transform: scale(1.05); border-color: #4facfe; box-shadow: 0 12px 25px rgba(79, 172, 254, 0.4), inset 0 0 15px rgba(255,255,255,0.2); z-index: 30; }
+        .block-icon { font-size: 2rem; margin-bottom: 5px; color: #00f2fe; }
+        .block-syntax { font-family: 'Fira Code', monospace; font-size: 0.7rem; font-weight: 800; color: #4facfe; }
+
+        .blocked-shake { animation: blockedShake 0.4s ease-in-out; border-color: #ff0844 !important; }
+        .blocked-shake .block-icon { color: #ff0844 !important; }
+
+        @keyframes blockedShake { 0%, 100% { transform: scale(1) translateX(0); box-shadow: 0 0 0 transparent; } 25%, 75% { transform: scale(1.05) translateX(-8px); box-shadow: 0 0 20px rgba(255,8,68,0.6); } 50% { transform: scale(1.05) translateX(8px); box-shadow: 0 0 20px rgba(255,8,68,0.6); } }
+
+        .escape-up { transform: translateY(-300px); opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53); }
+        .escape-down { transform: translateY(300px); opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53); }
+        .escape-left { transform: translateX(-300px); opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53); }
+        .escape-right { transform: translateX(300px); opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53); }
+
+        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.9rem; }
+        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
+
+        @media (max-width: 600px) { .heap-grid { padding: 10px; gap: 8px;} .block-icon { font-size: 1.5rem; } .block-syntax { font-size: 0.5rem; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shape shape-1"></div><div class="bg-shape shape-2"></div><div class="bg-shape shape-3"></div>
+
+    <div id="game-container">
+        <div class="game-header">
+            <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
+            <div class="sys-stats">
+                <div class="stat-box env-badge">ENV: <span id="ui-env">BOOTING</span></div>
+                <div class="stat-box score-badge">ACTIVE LEAKS: <span id="ui-leaks">20</span></div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="text-align: center; padding: 25px; margin-bottom: 30px;">
+            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-memory" style="color: #4facfe;"></i> HEAP AWAY (POINTERS)</h2>
+            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Tap blocks with unblocked pointer arrows to execute free() and sanitize the heap.</p>
+        </div>
+
+        <div class="heap-grid" id="heap-grid"></div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.2); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6);">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(67,233,123,0.4);"><i class="fa-solid fa-broom"></i> SANITIZED</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">Dynamic Heap Stack cleared.<br>Zero memory leaks remaining.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border: none; padding: 15px 35px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(67, 233, 123, 0.4);" onclick="window.location.href='index.html'">RETURN TO OS</button>
+        </div>
+    </div>
+
+    <!-- AUDIO ENGINE -->
+    <script src="audio-manager.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const syntaxData = { python: ["del", "gc.collect()", "None"], java: ["= null", "System.gc()"], javascript: ["delete", "= null"], cpp: ["delete", "free()", "nullptr"], kotlin: ["= null", "clear()"] };
+
+            const SIZE = 5; const TOTAL_BLOCKS = 20; 
+            let grid = Array(SIZE).fill().map(() => Array(SIZE).fill(null));
+            let activeLeaks = 0; let isAnimating = false;
+
+            const dirs = [ { r: -1, c: 0, class: 'escape-up', icon: 'fa-arrow-up' }, { r: 1, c: 0, class: 'escape-down', icon: 'fa-arrow-down' }, { r: 0, c: -1, class: 'escape-left', icon: 'fa-arrow-left' }, { r: 0, c: 1, class: 'escape-right', icon: 'fa-arrow-right' } ];
+
+            const uiEnv = document.getElementById('ui-env'); const uiLeaks = document.getElementById('ui-leaks');
+            const heapGrid = document.getElementById('heap-grid'); const victoryModal = document.getElementById('victory-modal');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentLang = (urlParams.get('lang') && syntaxData[urlParams.get('lang')]) ? urlParams.get('lang') : 'cpp';
+            uiEnv.innerText = currentLang.toUpperCase();
+            const syntaxWords = syntaxData[currentLang];
+
+            function generateSolvableBoard() {
+                let placed = 0; let attempts = 0;
+                while (placed < TOTAL_BLOCKS && attempts < 1000) {
+                    attempts++;
+                    let r = Math.floor(Math.random() * SIZE); let c = Math.floor(Math.random() * SIZE);
+                    if (grid[r][c] !== null) continue; 
+                    let shuffledDirs = [...dirs].sort(() => Math.random() - 0.5);
+                    for (let d of shuffledDirs) {
+                        let validPath = true; let currR = r + d.r; let currC = c + d.c;
+                        while (currR >= 0 && currR < SIZE && currC >= 0 && currC < SIZE) {
+                            if (grid[currR][currC] !== null) { validPath = false; break; }
+                            currR += d.r; currC += d.c;
+                        }
+                        if (validPath) {
+                            let syntaxText = syntaxWords[Math.floor(Math.random() * syntaxWords.length)];
+                            grid[r][c] = { dir: d, syntax: syntaxText, row: r, col: c };
+                            placed++; break; 
+                        }
+                    }
+                }
+                activeLeaks = placed; uiLeaks.innerText = activeLeaks;
+            }
+
+            function renderBoard() {
+                heapGrid.innerHTML = '';
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const cell = document.createElement('div'); cell.className = 'grid-cell';
+                        cell.dataset.r = r; cell.dataset.c = c;
+                        const blockData = grid[r][c];
+                        if (blockData) {
+                            const block = document.createElement('div'); block.className = 'heap-block';
+                            block.innerHTML = `<i class="fa-solid ${blockData.dir.icon} block-icon"></i><span class="block-syntax">${blockData.syntax}</span>`;
+                            block.addEventListener('click', () => attemptFree(block, r, c));
+                            cell.appendChild(block);
+                        }
+                        heapGrid.appendChild(cell);
+                    }
+                }
+            }
+
+            function attemptFree(blockElement, r, c) {
+                if (isAnimating) return; 
+                const blockData = grid[r][c]; if (!blockData) return;
+                const d = blockData.dir; let pathClear = true; let currR = r + d.r; let currC = c + d.c;
+
+                while (currR >= 0 && currR < SIZE && currC >= 0 && currC < SIZE) {
+                    if (grid[currR][currC] !== null) { pathClear = false; break; }
+                    currR += d.r; currC += d.c;
+                }
+
+                if (pathClear) {
+                    isAnimating = true; grid[r][c] = null; 
+                    blockElement.classList.add(d.class); 
+                    activeLeaks--; uiLeaks.innerText = activeLeaks;
+
+                    setTimeout(() => {
+                        blockElement.remove(); isAnimating = false;
+                        if (activeLeaks === 0) {
+                            // --- SAVE & AUDIO TRIGGER ---
+                            AudioEngine.playSound('success');
+                            AudioEngine.saveProgress('Heap Record', TOTAL_BLOCKS); 
+                            victoryModal.style.display = 'flex';
+                        }
+                    }, 500); 
+                } else {
+                    blockElement.classList.add('blocked-shake');
+                    setTimeout(() => { blockElement.classList.remove('blocked-shake'); }, 400);
+                }
+            }
+
+            generateSolvableBoard(); renderBoard();
+        });
+    </script>
+</body>
+</html>

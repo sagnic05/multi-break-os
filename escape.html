@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Escape IDE | Multi-Break OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
+    
+    <style>
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none;}
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
+        .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
+        
+        #game-container { max-width: 1200px; margin: 20px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
+        
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
+        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; }
+        
+        .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
+        .glass-panel { background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05), inset 0 0 15px rgba(255,255,255,0.3); margin-bottom: 20px;}
+
+        .ide-wrapper { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+        
+        .telemetry-box { display: flex; flex-direction: column; gap: 15px; background: rgba(255, 255, 255, 0.25); border-radius: 16px; padding: 25px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 0 15px rgba(255,255,255,0.5); }
+        .telemetry-box h2 { margin: 0; color: #1a202c; font-size: 1.5rem; font-weight: 900;}
+        .status-label { font-size: 0.8rem; color: #4a5568; margin-bottom: 4px; text-transform: uppercase; font-family: 'Fira Code', monospace; font-weight: 800;}
+        .status-val { font-family: 'Fira Code', monospace; font-size: 1.6rem; font-weight: 900; color: #4facfe; }
+        
+        .timer-display { font-family: 'Fira Code', monospace; font-size: 2.5rem; font-weight: 900; color: #ff0844; text-shadow: 0 0 10px rgba(255,8,68,0.3); margin-top: 5px; text-align: center;}
+        .tier-badge-large { background: rgba(79, 172, 254, 0.2); border: 1px solid #4facfe; padding: 10px; border-radius: 8px; color: #00f2fe; text-align: center; font-weight: 900; font-size: 1.2rem; margin: 10px 0;}
+
+        .workspace { display: flex; flex-direction: column; gap: 20px; }
+        
+        .directive-box { background: rgba(255, 255, 255, 0.4); border-left: 5px solid #b224ef; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .directive-title { font-weight: 900; color: #b224ef; font-size: 1.1rem; margin-bottom: 8px; text-transform: uppercase; }
+        .directive-desc { font-family: 'Fira Code', monospace; font-size: 1rem; color: #1a202c; font-weight: 700; line-height: 1.5;}
+        .directive-params { margin-top: 10px; font-family: 'Fira Code', monospace; color: #fa709a; font-weight: 900; font-size: 0.9rem;}
+
+        .editor-container { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); transition: all 0.3s ease;}
+        .editor-header { background: rgba(255, 255, 255, 0.6); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.5); font-family: 'Fira Code', monospace; font-weight: 800; color: #4a5568;}
+        .editor-wrapper { display: flex; position: relative; }
+        
+        .line-numbers { background: rgba(255,255,255,0.3); color: #718096; padding: 15px 10px; font-family: 'Fira Code', monospace; font-size: 1.1rem; text-align: right; user-select: none; border-right: 1px solid rgba(255,255,255,0.5); width: 40px; box-sizing: border-box; font-weight: bold;}
+        .code-input { flex: 1; background: transparent; border: none; padding: 15px; color: #1a202c; font-family: 'Fira Code', monospace; font-size: 1.1rem; line-height: 1.5; outline: none; resize: none; min-height: 280px; font-weight: 700; tab-size: 4;}
+        
+        .stdout-terminal { background: rgba(26, 32, 44, 0.85); border-top: 2px solid #4facfe; padding: 15px; height: 130px; overflow-y: auto; font-family: 'Fira Code', monospace; font-size: 0.9rem; display: flex; flex-direction: column; gap: 6px; color: #a0aec0;}
+        .log-sys { color: #00f2fe; }
+        .log-success { color: #43e97b; font-weight: bold; text-shadow: 0 0 5px rgba(67, 233, 123, 0.4);}
+        .log-err { color: #ff0844; font-weight: bold; text-shadow: 0 0 5px rgba(255, 8, 68, 0.4);}
+
+        .action-btn { background: rgba(255,255,255,0.4); border: 2px solid; padding: 12px 25px; border-radius: 10px; font-family: 'Fira Code', monospace; font-weight: 900; cursor: pointer; transition: all 0.2s; width: 100%;}
+        .btn-cyan { border-color: #4facfe; color: #0f4c75; } .btn-cyan:hover { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);}
+        .btn-pink { border-color: #fa709a; color: #5c182d; margin-top: 10px;} .btn-pink:hover { background: linear-gradient(135deg, #fa709a, #fee140); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(250, 112, 154, 0.4);}
+        .btn-compile { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0f3e22; border: none; padding: 15px; font-size: 1.2rem; box-shadow: 0 5px 15px rgba(67, 233, 123, 0.3);}
+        .btn-compile:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(67, 233, 123, 0.5); color: #0f3e22;}
+
+        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; transition: all 0.3s ease; font-size: 0.85rem; }
+        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; transform: translateY(-2px); }
+
+        @keyframes wrongShake { 0%, 100% { transform: translateX(0); box-shadow: 0 0 0 transparent; } 20%, 60% { transform: translateX(-10px); box-shadow: 0 0 30px rgba(255,8,68,0.4); } 40%, 80% { transform: translateX(10px); box-shadow: 0 0 30px rgba(255,8,68,0.4); } }
+        @keyframes correctFlash { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 transparent; } 50% { transform: scale(1.02); box-shadow: 0 0 40px #43e97b, inset 0 0 20px #43e97b; } }
+
+        .shake-error { animation: wrongShake 0.4s ease-in-out; border-color: #ff0844 !important; }
+        .glow-success { animation: correctFlash 0.6s ease-out; border-color: #43e97b !important; }
+
+        @media (max-width: 900px) { .ide-wrapper { grid-template-columns: 1fr; } .telemetry-box { flex-direction: row; flex-wrap: wrap; justify-content: center; text-align: center;} .timer-display {font-size: 2rem;} }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shape shape-1"></div><div class="bg-shape shape-2"></div><div class="bg-shape shape-3"></div>
+
+    <div id="game-container">
+        
+        <div class="game-header">
+            <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
+            <div class="sys-stats">
+                <div class="stat-box env-badge">ENV: <span id="ui-env">BOOTING...</span></div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="text-align: center;">
+            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-terminal" style="color: #4facfe;"></i> TERMINAL ESCAPE IDE</h2>
+            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Write compile-ready source code from scratch to break through 50 procedural security tiers.</p>
+        </div>
+
+        <div class="ide-wrapper">
+            
+            <div class="telemetry-box">
+                <div style="text-align: center;">
+                    <div class="status-label">MAINFRAME CLOCK</div>
+                    <div class="timer-display" id="timer-val">00.0s</div>
+                </div>
+                
+                <div id="tier-val" class="tier-badge-large">TIER 1 / 50</div>
+
+                <div style="display: flex; justify-content: space-around; text-align: center; margin: 10px 0;">
+                    <div>
+                        <div class="status-label">HIGHEST</div>
+                        <div class="status-val" id="best-tier-val" style="color: #fa709a;">0</div>
+                    </div>
+                    <div>
+                        <div class="status-label">LINES</div>
+                        <div class="status-val" id="lines-val" style="color: #b224ef;">0</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <div class="status-label">STATUS</div>
+                    <div class="status-val" id="compile-status-val" style="color: #4a5568; font-size: 1.2rem;">AWAITING CODE</div>
+                </div>
+
+                <button class="action-btn btn-cyan" onclick="pullFreshQuestion()">PULL FRESH ASSIGNMENT</button>
+                <button class="action-btn btn-pink" onclick="location.reload()">REBOOT KERNEL</button>
+            </div>
+
+            <div class="workspace" id="workspace-area">
+                
+                <div class="directive-box">
+                    <div class="directive-title" id="directive-title">ASSIGNMENT DIRECTIVE</div>
+                    <div class="directive-desc" id="directive-desc">Loading algorithmic requirement definitions...</div>
+                    <div class="directive-params" id="directive-params">> SYSTEM INPUT PARAMETERS: --</div>
+                </div>
+
+                <div class="editor-container" id="editor-box">
+                    <div class="editor-header">
+                        <span><i class="fa-solid fa-code"></i> <span id="file-name">main.txt</span></span>
+                        <span style="color: #4facfe; cursor: pointer;" onclick="injectBoilerplate()">⚡ INJECT BOILERPLATE</span>
+                    </div>
+                    
+                    <div class="editor-wrapper">
+                        <div class="line-numbers" id="line-numbers">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10</div>
+                        <textarea id="code-input" class="code-input" autocomplete="off" spellcheck="false" oninput="updateEditorLines()" onkeydown="handleTabs(event)"></textarea>
+                    </div>
+
+                    <div class="stdout-terminal" id="stdout-terminal"></div>
+                </div>
+
+                <div style="display: flex; gap: 15px; width: 100%;">
+                    <button class="action-btn btn-compile" style="flex: 2;" onclick="compileAndExecute()"><i class="fa-solid fa-play"></i> COMPILE & EXECUTE</button>
+                    <button class="action-btn btn-cyan" style="flex: 1; border-color: #b224ef; color: #b224ef;" onclick="scanHint()"><i class="fa-solid fa-lightbulb"></i> ALGORITHM HINT</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.4); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6); background: rgba(255,255,255,0.9); border-radius: 16px;">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900;"><i class="fa-solid fa-unlock-keyhole"></i> ESCAPED!</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">All 50 progressive security tiers shattered.<br>You are a Kernel Master.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c; border: none; padding: 15px 35px; font-size: 1.1rem;" onclick="window.location.href='index.html'">RETURN TO OS HUB</button>
+        </div>
+    </div>
+
+    <script src="audio-manager.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- MULTI-LANGUAGE DYNAMIC CONFIGURATION ---
+            const LangConfig = {
+                c: { name: "C", print: "printf", ext: "c", boilerplate: "#include <stdio.h>\n\nint main() {\n    // Implementation logic\n    \n    return 0;\n}", checkRegex: /printf/ },
+                cpp: { name: "C++", print: "cout", ext: "cpp", boilerplate: "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Implementation logic\n    \n    return 0;\n}", checkRegex: /cout|printf/ },
+                java: { name: "Java", print: "System.out", ext: "java", boilerplate: "public class Main {\n    public static void main(String[] args) {\n        // Implementation logic\n        \n    }\n}", checkRegex: /System\.out\.print/ },
+                python: { name: "Python", print: "print", ext: "py", boilerplate: "def main():\n    # Implementation logic\n    pass\n\nif __name__ == '__main__':\n    main()", checkRegex: /print/ },
+                javascript: { name: "JavaScript", print: "console.log", ext: "js", boilerplate: "function main() {\n    // Implementation logic\n    \n}\n\nmain();", checkRegex: /console\.log/ },
+                kotlin: { name: "Kotlin", print: "print", ext: "kt", boilerplate: "fun main() {\n    // Implementation logic\n    \n}", checkRegex: /print/ }
+            };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const requestedLang = urlParams.get('lang') || 'python';
+            const currentLang = LangConfig[requestedLang] ? requestedLang : 'python';
+            const conf = LangConfig[currentLang];
+
+            // Set UI specific to the selected language
+            document.getElementById('ui-env').innerText = `${conf.name.toUpperCase()} MAINFRAME`;
+            document.getElementById('file-name').innerText = `main.${conf.ext}`;
+
+            // Save state keys Isolated by language!
+            const saveKeyTier = `mb_escape_tier_${currentLang}`;
+            const saveKeyLines = `mb_escape_lines_${currentLang}`;
+            const saveKeyCode = `mb_escape_code_${currentLang}`;
+
+            function escapeRegex(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+            const getPrintKw = () => conf.print;
+            const getLangName = () => conf.name;
+
+            // --- 50-TIER PROCEDURAL UNIVERSAL DATABASE ---
+            const masterTierDatabase = [
+                { t: 1, name: "Basic Summation", gen: () => { let a = Math.floor(Math.random()*50)+1; let b = Math.floor(Math.random()*50)+1; return { desc: `Write a complete ${getLangName()} program that declares two integers with values ${a} and ${b}, calculates their sum, and prints ONLY the resulting sum integer.`, p: `Values: a = ${a}, b = ${b}`, verify: (code) => { let sum = a + b; return checkUniversalOutput(code, sum.toString(), ["+", getPrintKw()]); }, hint: `Declare integers, add them, and use ${getPrintKw()} to output.` }; }},
+                { t: 2, name: "Variable Multiplication", gen: () => { let x = Math.floor(Math.random()*12)+2; let y = Math.floor(Math.random()*12)+2; return { desc: `Write complete ${getLangName()} code to multiply the integers ${x} and ${y}. Print exactly the final product integer to stdout.`, p: `Values: x = ${x}, y = ${y}`, verify: (code) => { let prod = x * y; return checkUniversalOutput(code, prod.toString(), ["*", getPrintKw()]); }, hint: `Multiply using the * operator and output via ${getPrintKw()}.` }; }},
+                { t: 3, name: "Basic Subtraction", gen: () => { let m = Math.floor(Math.random()*100)+50; let n = Math.floor(Math.random()*40)+1; return { desc: `Write full ${getLangName()} code that subtracts ${n} from ${m} and outputs ONLY the resulting integer value.`, p: `Values: m = ${m}, n = ${n}`, verify: (code) => { let diff = m - n; return checkUniversalOutput(code, diff.toString(), ["-", getPrintKw()]); }, hint: "Perform m - n and output the exact calculated numeric result." }; }},
+                { t: 4, name: "Integer Modulo", gen: () => { let base = Math.floor(Math.random()*50)+20; let mod = Math.floor(Math.random()*8)+3; return { desc: `Write a complete ${getLangName()} program that calculates the remainder when ${base} is divided by ${mod} using the modulo operator. Print the result.`, p: `Values: Base = ${base}, Divisor = ${mod}`, verify: (code) => { let rem = base % mod; return checkUniversalOutput(code, rem.toString(), ["%", getPrintKw()]); }, hint: "Use the % modulo operator to extract the remainder." }; }},
+                { t: 5, name: "Area of a Rectangle", gen: () => { let w = Math.floor(Math.random()*15)+5; let h = Math.floor(Math.random()*15)+5; return { desc: `Write full ${getLangName()} source code to calculate the area of a rectangle with width ${w} and height ${h}. Print the output.`, p: `Dimensions: Width = ${w}, Height = ${h}`, verify: (code) => { let area = w * h; return checkUniversalOutput(code, area.toString(), ["*", getPrintKw()]); }, hint: "Area formula is width * height. Declare both variables." }; }},
+                { t: 6, name: "Even or Odd Evaluation", gen: () => { let val = Math.floor(Math.random()*100)+1; let isEven = val % 2 === 0; return { desc: `Write a ${getLangName()} program that evaluates if the integer ${val} is even or odd. If even, print exactly 'EVEN'. If odd, print exactly 'ODD'.`, p: `Input Integer: ${val}`, verify: (code) => { let expected = isEven ? "EVEN" : "ODD"; return checkUniversalOutput(code, expected, ["if", "%", getPrintKw()]); }, hint: "Use an if() statement checking val % 2 == 0." }; }},
+                { t: 7, name: "Maximum of Two Numbers", gen: () => { let n1 = Math.floor(Math.random()*200); let n2 = Math.floor(Math.random()*200); if(n1===n2) n1++; let max = Math.max(n1, n2); return { desc: `Write complete ${getLangName()} logic to compare ${n1} and ${n2}. Output ONLY the maximum of the two numbers.`, p: `Inputs: ${n1}, ${n2}`, verify: (code) => { return checkUniversalOutput(code, max.toString(), ["if", getPrintKw()]); }, hint: "Use logic to evaluate maximums." }; }},
+                { t: 8, name: "Minimum of Three Numbers", gen: () => { let v1 = Math.floor(Math.random()*90)+10; let v2 = Math.floor(Math.random()*90)+10; let v3 = Math.floor(Math.random()*90)+10; let min = Math.min(v1, v2, v3); return { desc: `Write complete ${getLangName()} source code to find the minimum value among ${v1}, ${v2}, and ${v3}. Print the lowest numeric value.`, p: `Inputs: ${v1}, ${v2}, ${v3}`, verify: (code) => { return checkUniversalOutput(code, min.toString(), ["if", getPrintKw()]); }, hint: "Use chained if-else blocks or logical AND gates." }; }},
+                { t: 9, name: "Simple Loop Accumulator", gen: () => { let lim = Math.floor(Math.random()*5)+4; let total = 0; for(let i=1; i<=lim; i++) total += i; return { desc: `Write a complete ${getLangName()} loop that adds all integers from 1 up to ${lim} inclusive. Print ONLY the final sum.`, p: `Limit: ${lim}`, verify: (code) => { return checkUniversalOutput(code, total.toString(), ["+", getPrintKw()]); }, hint: "Use a loop accumulating into a sum variable." }; }},
+                { t: 10, name: "Factorial Engine", gen: () => { let f = Math.floor(Math.random()*4)+3; let fact = 1; for(let i=1; i<=f; i++) fact *= i; return { desc: `Write complete ${getLangName()} code to calculate the factorial of ${f} (${f}!). Output exactly the final calculated factorial value.`, p: `Factorial Target: ${f}`, verify: (code) => { return checkUniversalOutput(code, fact.toString(), ["*", getPrintKw()]); }, hint: "Initialize fact = 1, loop from 1 to f multiplying fact." }; }},
+                
+                { t: 11, name: "Array Index Access", gen: () => { let arr = [Math.floor(Math.random()*50), Math.floor(Math.random()*50), Math.floor(Math.random()*50)]; let idx = Math.floor(Math.random()*3); return { desc: `Write a ${getLangName()} program that initializes an array/list containing exactly {${arr.join(', ')}}. Access and print the element stored at index ${idx}.`, p: `Target Index: ${idx}`, verify: (code) => { return checkUniversalOutput(code, arr[idx].toString(), ["[", "]", getPrintKw()]); }, hint: `Arrays are zero-indexed. Access using arr[idx].` }; }},
+                { t: 12, name: "Array Summation", gen: () => { let arr = [Math.floor(Math.random()*10)+1, Math.floor(Math.random()*10)+1, Math.floor(Math.random()*10)+1]; let sum = arr.reduce((a,b)=>a+b,0); return { desc: `Write full ${getLangName()} code initializing an array/list with values {${arr.join(', ')}}. Loop through, add the elements, and print the total sum.`, p: `Payload: {${arr.join(', ')}}`, verify: (code) => { return checkUniversalOutput(code, sum.toString(), ["[", "+", getPrintKw()]); }, hint: "Loop through the indices accumulating the values." }; }},
+                { t: 13, name: "Variable Reassignment", gen: () => { let val1 = Math.floor(Math.random()*50); let val2 = Math.floor(Math.random()*50); return { desc: `Write a complete ${getLangName()} program that initializes a variable to ${val1}, reassigns it to ${val2}, and prints the final value.`, p: `Initial: ${val1}, Reassign: ${val2}`, verify: (code) => { return checkUniversalOutput(code, val2.toString(), ["=", getPrintKw()]); }, hint: "Declare, overwrite, then print." }; }},
+                { t: 14, name: "Countdown Loop", gen: () => { return { desc: `Write complete ${getLangName()} code with a loop that counts down from 3 to 1, and prints 'GO' when finished.`, p: `Sequence: 3, 2, 1, GO`, verify: (code) => { return checkUniversalOutput(code, "GO", ["-", getPrintKw()]); }, hint: "Loop backwards and print GO outside the loop." }; }},
+                { t: 15, name: "Multiples Sum", gen: () => { return { desc: `Write full ${getLangName()} code that sums all multiples of 5 between 1 and 20. Print the final sum.`, p: `Target: Multiples of 5`, verify: (code) => { return checkUniversalOutput(code, "50", ["+", getPrintKw()]); }, hint: "5 + 10 + 15 + 20 = 50." }; }},
+                { t: 16, name: "Square Square-Root Evaluator", gen: () => { let s = Math.floor(Math.random()*10)+3; let sq = s * s; return { desc: `Write full ${getLangName()} code that calculates the square of the integer ${s}. Output the calculated result.`, p: `Value: ${s}`, verify: (code) => { return checkUniversalOutput(code, sq.toString(), ["*", getPrintKw()]); }, hint: "Multiply s * s and commit to standard output." }; }},
+                { t: 17, name: "Divisibility Check", gen: () => { let val = Math.floor(Math.random()*50)+20; let isDiv = val % 3 === 0; return { desc: `Write a program that evaluates if ${val} is perfectly divisible by 3. Print 'YES' if true, or 'NO'.`, p: `Input: ${val}`, verify: (code) => { return checkUniversalOutput(code, isDiv ? "YES" : "NO", ["%", "if", getPrintKw()]); }, hint: "Check if val % 3 == 0." }; }},
+                { t: 18, name: "Array Average", gen: () => { let arr = [10, 20, 30, 40]; let avg = 25; return { desc: `Write full ${getLangName()} logic declaring a list {10, 20, 30, 40}. Calculate and print the numeric average.`, p: `Payload: {10, 20, 30, 40}`, verify: (code) => { return checkUniversalOutput(code, avg.toString(), ["/", getPrintKw()]); }, hint: "Sum the elements and divide by 4." }; }},
+                { t: 19, name: "Leap Year Evaluator", gen: () => { let yrs = [2024, 2026, 2028, 2030]; let yr = yrs[Math.floor(Math.random()*yrs.length)]; let isLeap = (yr % 4 === 0 && yr % 100 !== 0) || (yr % 400 === 0); return { desc: `Write complete ${getLangName()} code evaluating if the year ${yr} is a leap year. Print exactly 'LEAP' if true, or 'STANDARD' if false.`, p: `Year: ${yr}`, verify: (code) => { let exp = isLeap ? "LEAP" : "STANDARD"; return checkUniversalOutput(code, exp, ["if", "%", getPrintKw()]); }, hint: "Check mod 4, mod 100, and mod 400 rules." }; }},
+                { t: 20, name: "Bitwise AND Operation", gen: () => { let b1 = Math.floor(Math.random()*15)+5; let b2 = Math.floor(Math.random()*15)+5; let res = b1 & b2; return { desc: `Write complete ${getLangName()} code calculating the bitwise AND (&) output between ${b1} and ${b2}. Print the numeric result.`, p: `Inputs: ${b1}, ${b2}`, verify: (code) => { return checkUniversalOutput(code, res.toString(), ["&", getPrintKw()]); }, hint: "Use the bitwise & operator." }; }},
+                
+                { t: 21, name: "Bitwise OR Gate", gen: () => { let n1 = 12; let n2 = 10; let res = n1 | n2; return { desc: `Write full ${getLangName()} code calculating the bitwise OR (|) between 12 and 10. Output the numeric integer result.`, p: `Inputs: 12, 10`, verify: (code) => checkUniversalOutput(code, res.toString(), ["|", getPrintKw()]), hint: "Use the bitwise | operator." }; }},
+                { t: 22, name: "Bitwise XOR Gate", gen: () => { let x = 9; let y = 5; let res = x ^ y; return { desc: `Write full ${getLangName()} code calculating the bitwise XOR (^) between 9 and 5. Print the numeric output.`, p: `Inputs: 9, 5`, verify: (code) => checkUniversalOutput(code, res.toString(), ["^", getPrintKw()]), hint: "Use the bitwise ^ operator." }; }},
+                { t: 23, name: "Bitwise Left Shift", gen: () => { let val = Math.floor(Math.random()*5)+2; let shift = Math.floor(Math.random()*2)+1; let res = val << shift; return { desc: `Write complete ${getLangName()} logic shifting the integer ${val} left by ${shift} bits (<<). Print the resulting value.`, p: `Value: ${val}, Shift: ${shift}`, verify: (code) => checkUniversalOutput(code, res.toString(), ["<<", getPrintKw()]), hint: "Use val << shift." }; }},
+                { t: 24, name: "String Length Hardcode", gen: () => { let strs = ["code", "break", "kernel", "stack"]; let s = strs[Math.floor(Math.random()*strs.length)]; return { desc: `Write complete ${getLangName()} code declaring a string "${s}". Print its exact length (the integer ${s.length}).`, p: `String: "${s}"`, verify: (code) => checkUniversalOutput(code, s.length.toString(), [getPrintKw()]), hint: "Just output the integer length of the string." }; }},
+                { t: 25, name: "Vowel Scanner", gen: () => { let ch = ['E','O','X','Z'][Math.floor(Math.random()*4)]; let isV = ['E','O'].includes(ch); return { desc: `Write full source code evaluating if the character '${ch}' is a vowel. Print exactly 'VOWEL' or 'CONSONANT'.`, p: `Input: '${ch}'`, verify: (code) => checkUniversalOutput(code, isV ? "VOWEL" : "CONSONANT", ["if", getPrintKw()]), hint: "Check if it matches A, E, I, O, or U." }; }},
+                { t: 26, name: "Absolute Value", gen: () => { let neg = -(Math.floor(Math.random()*50)+10); let abs = -neg; return { desc: `Write a program that calculates and prints the absolute positive value of the negative integer ${neg}.`, p: `Input: ${neg}`, verify: (code) => checkUniversalOutput(code, abs.toString(), [getPrintKw()]), hint: "Multiply by -1 or use an absolute function." }; }},
+                { t: 27, name: "Nested Loop Simulation", gen: () => { return { desc: `Write complete ${getLangName()} code that prints exactly the number '7777'.`, p: `Target Output: '7777'`, verify: (code) => checkUniversalOutput(code, "7777", [getPrintKw()]), hint: "Just print the required string." }; }},
+                { t: 28, name: "Array Search", gen: () => { let target = 45; return { desc: `Write full ${getLangName()} code initializing an array {15, 30, 45, 60}. Find value ${target} and print exactly its matching index (2).`, p: `Target Value: ${target}`, verify: (code) => checkUniversalOutput(code, "2", [getPrintKw()]), hint: "The index is 2." }; }},
+                { t: 29, name: "Array Min Element", gen: () => { return { desc: `Write full ${getLangName()} logic initializing an array {88, 42, 99, 12, 55}. Find and print the minimum integer (12).`, p: `Payload: {88, 42, 99, 12, 55}`, verify: (code) => checkUniversalOutput(code, "12", [getPrintKw()]), hint: "Print 12." }; }},
+                { t: 30, name: "Array Max Element", gen: () => { return { desc: `Write full ${getLangName()} logic initializing an array {5, 95, 33, 102, 40}. Find and print the maximum integer (102).`, p: `Payload: {5, 95, 33, 102, 40}`, verify: (code) => checkUniversalOutput(code, "102", [getPrintKw()]), hint: "Print 102." }; }},
+                
+                // Fallback procedural logic for tiers 31-50
+                ...Array(20).fill(null).map((_, i) => {
+                    let currentTier = 31 + i;
+                    return {
+                        t: currentTier,
+                        name: `Mainframe Challenge Tier ${currentTier}`,
+                        gen: () => {
+                            let offsetVal = Math.floor(Math.random()*15)+5; let multiplier = Math.floor(Math.random()*4)+2; let expectedResult = offsetVal * multiplier + currentTier;
+                            return {
+                                desc: `Write complete compilation source code that declares an integer with value ${offsetVal}, multiplies it by ${multiplier}, adds the current security Tier ID (${currentTier}), and outputs ONLY the absolute final calculated numeric integer result.`,
+                                p: `Base: ${offsetVal}, Multiplier: ${multiplier}, Tier Offset: ${currentTier}`,
+                                verify: (code) => checkUniversalOutput(code, expectedResult.toString(), [getPrintKw()]),
+                                hint: `Evaluate (${offsetVal} * ${multiplier}) + ${currentTier}, and output it using ${getPrintKw()}.`
+                            };
+                        }
+                    };
+                })
+            ];
+
+            // Universal Verification Engine
+            function checkUniversalOutput(code, expectedString, requiredKeywords) {
+                for(let kw of requiredKeywords) {
+                    let escapedKw = escapeRegex(kw);
+                    const kwRegex = new RegExp(escapedKw, 'i');
+                    if(!kwRegex.test(code)) return { ok: false, err: `COMPILATION FAULT: Required syntax [${kw}] missing from source stream.` };
+                }
+                
+                if(!code.includes(expectedString)) {
+                    return { ok: false, err: `EXECUTION FAULT: Evaluated output does not match expected exact value: [${expectedString}].` };
+                }
+                return { ok: true, out: expectedString };
+            }
+
+            // --- IDE STATE & LOGIC ---
+            let activeTierIndex = 0; 
+            let activeQuestionObj = null;
+            let totalLinesWritten = 0;
+            let highestTierReached = 0;
+            let timerInterval = null;
+            let elapsedMs = 0;
+
+            const elTier = document.getElementById('tier-val');
+            const elBestTier = document.getElementById('best-tier-val');
+            const elLines = document.getElementById('lines-val');
+            const elTimer = document.getElementById('timer-val');
+            const elStatus = document.getElementById('compile-status-val');
+            const elDirTitle = document.getElementById('directive-title');
+            const elDirDesc = document.getElementById('directive-desc');
+            const elDirParams = document.getElementById('directive-params');
+            const elInput = document.getElementById('code-input');
+            const elLineNums = document.getElementById('line-numbers');
+            const elConsole = document.getElementById('stdout-terminal');
+            const editorBox = document.getElementById('editor-box');
+
+            function logConsole(text, type) {
+                const entry = document.createElement('div');
+                entry.className = type === "err" ? 'log-err' : type === "success" ? 'log-success' : 'log-sys';
+                entry.innerText = `> ${text}`;
+                elConsole.appendChild(entry);
+                elConsole.scrollTop = elConsole.scrollHeight;
+            }
+
+            function loadPersistentData() {
+                const bestT = localStorage.getItem(saveKeyTier);
+                const linesW = localStorage.getItem(saveKeyLines);
+                const savedCode = localStorage.getItem(saveKeyCode);
+                
+                if(bestT) { highestTierReached = parseInt(bestT); elBestTier.innerText = `${highestTierReached}`; }
+                if(linesW) { totalLinesWritten = parseInt(linesW); elLines.innerText = totalLinesWritten; }
+                
+                if(savedCode && savedCode.trim() !== "") {
+                    elInput.value = savedCode;
+                } else {
+                    window.injectBoilerplate();
+                }
+                
+                logConsole(`IDE loaded safely. ${conf.name} Compiler registers unsealed.`, "sys");
+                logConsole("Awaiting operator compilation submission...", "sys");
+            }
+
+            function savePersistentData() {
+                if(activeTierIndex + 1 > highestTierReached) {
+                    highestTierReached = activeTierIndex + 1;
+                    localStorage.setItem(saveKeyTier, highestTierReached);
+                    elBestTier.innerText = `${highestTierReached}`;
+                }
+                localStorage.setItem(saveKeyLines, totalLinesWritten);
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval);
+                elapsedMs = 0;
+                elTimer.innerText = "00.0s";
+                const startStamp = Date.now();
+                timerInterval = setInterval(() => {
+                    elapsedMs = Date.now() - startStamp;
+                    elTimer.innerText = `${(elapsedMs / 1000).toFixed(1).padStart(4, '0')}s`;
+                }, 100);
+            }
+
+            window.updateEditorLines = function() {
+                const lines = elInput.value.split('\n').length;
+                let numStr = '';
+                for(let i=1; i<=lines; i++) { numStr += i + '<br>'; }
+                elLineNums.innerHTML = numStr;
+                localStorage.setItem(saveKeyCode, elInput.value);
+            }
+
+            window.handleTabs = function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = elInput.selectionStart;
+                    const end = elInput.selectionEnd;
+                    elInput.value = elInput.value.substring(0, start) + "    " + elInput.value.substring(end);
+                    elInput.selectionStart = elInput.selectionEnd = start + 4;
+                    window.updateEditorLines();
+                }
+            }
+
+            window.injectBoilerplate = function() {
+                if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                elInput.value = conf.boilerplate;
+                window.updateEditorLines();
+                logConsole("Boilerplate architecture injected into source stream.", "sys");
+            }
+
+            window.pullFreshQuestion = function() {
+                if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                const targetTierMeta = masterTierDatabase[activeTierIndex];
+                activeQuestionObj = targetTierMeta.gen();
+
+                elTier.innerText = `TIER ${targetTierMeta.t} / 50`;
+                elDirTitle.innerText = `ASSIGNMENT: ${targetTierMeta.name.toUpperCase()}`;
+                elDirDesc.innerText = activeQuestionObj.desc;
+                elDirParams.innerText = `> ACTIVE PARAMETERS: ${activeQuestionObj.p}`;
+                
+                elStatus.innerText = "AWAITING CODE";
+                elStatus.style.color = "#4a5568";
+                
+                logConsole(`Pulled randomized requirements for Tier ${targetTierMeta.t}.`, "sys");
+            }
+
+            function triggerEditorAnim(animClass) {
+                editorBox.classList.remove('shake-error', 'glow-success');
+                void editorBox.offsetWidth; 
+                editorBox.classList.add(animClass);
+            }
+
+            window.compileAndExecute = function() {
+                if(!activeQuestionObj) return;
+
+                const codePayload = elInput.value.trim();
+                
+                // Baseline check to ensure they are using the correct language commands!
+                if (!conf.checkRegex.test(codePayload)) {
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                    elStatus.innerText = "SYNTAX FAULT"; elStatus.style.color = "#ff0844";
+                    logConsole(`FATAL SYNTAX FAULT: Code missing fundamental ${conf.name} structure (e.g., '${conf.print}').`, "err");
+                    triggerEditorAnim('shake-error');
+                    return;
+                }
+
+                const linesCount = codePayload.split('\n').length;
+                totalLinesWritten += linesCount;
+                elLines.innerText = totalLinesWritten;
+                savePersistentData();
+
+                logConsole("Parsing syntax trees... evaluating register headers...", "sys");
+                elStatus.innerText = "COMPILING...";
+                elStatus.style.color = "#fa709a";
+
+                setTimeout(() => {
+                    let verifyResult = { ok: false, err: "CRITICAL: Compiler unhandled exception caught." };
+                    try { verifyResult = activeQuestionObj.verify(codePayload); } catch(err) { verifyResult = { ok: false, err: `CRITICAL PARSER EXCEPTION: ${err.message}` }; }
+
+                    if(verifyResult.ok) {
+                        if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('success');
+                        elStatus.innerText = "COMPILED SAFELY"; elStatus.style.color = "#43e97b";
+                        logConsole(`EXECUTION VERIFIED: Code output exact expected stream: [${verifyResult.out}].`, "success");
+                        triggerEditorAnim('glow-success');
+                        
+                        setTimeout(() => {
+                            if(activeTierIndex < masterTierDatabase.length - 1) {
+                                activeTierIndex++;
+                                savePersistentData();
+                                window.pullFreshQuestion();
+                                window.injectBoilerplate(); 
+                            } else {
+                                savePersistentData();
+                                if(typeof AudioEngine !== 'undefined') {
+                                    AudioEngine.playSound('success');
+                                    AudioEngine.saveProgress('Mainframe', 'Tier 50');
+                                }
+                                clearInterval(timerInterval);
+                                document.getElementById('victory-modal').style.display = 'flex';
+                            }
+                        }, 1400);
+
+                    } else {
+                        if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                        elStatus.innerText = "RUNTIME FAULT"; elStatus.style.color = "#ff0844";
+                        logConsole(verifyResult.err, "err");
+                        triggerEditorAnim('shake-error');
+                    }
+                }, 500);
+            }
+
+            window.scanHint = function() {
+                if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                if(!activeQuestionObj) return;
+                logConsole(`HINT UPLINK: ${activeQuestionObj.hint}`, "sys");
+            }
+
+            // Init
+            loadPersistentData();
+            window.updateEditorLines();
+            window.pullFreshQuestion();
+            startTimer();
+        });
+    </script>
+</body>
+</html>

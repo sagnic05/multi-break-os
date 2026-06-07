@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kernel Panic RPG | Multi-Break OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
+    
+    <style>
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none;}
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
+        .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
+        
+        #game-container { max-width: 950px; margin: 40px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
+        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; }
+        
+        .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
+        .level-badge { color: #4facfe; border-color: rgba(79, 172, 254, 0.4);}
+
+        /* Standard Glass Intro Panel */
+        .glass-panel { background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05), inset 0 0 15px rgba(255,255,255,0.3); padding: 25px; margin-bottom: 30px;}
+
+        /* --- ARENA STYLING (Bright Glass) --- */
+        .arena-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .entity-card { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.8); border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(31, 38, 135, 0.05); position: relative; }
+        
+        .avatar { font-size: 4rem; width: 100px; height: 100px; margin: 0 auto 15px; display: flex; justify-content: center; align-items: center; border-radius: 50%; background: rgba(255,255,255,0.5); border: 3px solid; transition: transform 0.2s; }
+        .player-avatar { border-color: #4facfe; box-shadow: 0 0 20px rgba(79, 172, 254, 0.4); animation: float 2.5s infinite ease-in-out; }
+        .enemy-avatar { border-color: #ff0844; box-shadow: 0 0 20px rgba(255, 8, 68, 0.4); animation: float 2s infinite ease-in-out reverse; }
+
+        .entity-name { font-family: 'Fira Code', monospace; font-weight: 900; font-size: 1.1rem; color: #1a202c; margin-bottom: 10px; }
+        
+        .hp-box { width: 100%; background: rgba(26, 32, 44, 0.1); border-radius: 10px; height: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.8); margin-bottom: 5px; box-shadow: inset 0 0 5px rgba(0,0,0,0.1);}
+        .hp-bar { height: 100%; width: 100%; transition: width 0.3s ease, background-color 0.3s ease; }
+        #player-hp-bar { background: linear-gradient(90deg, #4facfe, #00f2fe); }
+        #enemy-hp-bar { background: linear-gradient(90deg, #ff0844, #fa709a); }
+        .hp-numbers { font-family: 'Fira Code', monospace; font-size: 0.85rem; font-weight: 800; color: #4a5568; }
+
+        /* --- CONTROL CONSOLE --- */
+        .console-container { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        
+        .menu-box { display: flex; flex-direction: column; gap: 10px; }
+        .attack-btn { background: rgba(255, 255, 255, 0.5); border: 2px solid; padding: 15px; border-radius: 12px; font-family: 'Fira Code', monospace; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
+        .btn-easy { border-color: #43e97b; color: #0f3e22; } .btn-easy:hover { background: #43e97b; color: white; transform: translateX(5px); }
+        .btn-med { border-color: #fa709a; color: #5c182d; } .btn-med:hover { background: #fa709a; color: white; transform: translateX(5px); }
+        .btn-hard { border-color: #ff0844; color: #5c0015; } .btn-hard:hover { background: #ff0844; color: white; transform: translateX(5px); }
+
+        .action-screen { background: rgba(26, 32, 44, 0.85); border: 1px solid #4facfe; border-radius: 16px; padding: 25px; color: white; display: flex; flex-direction: column; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+        
+        .dialogue { font-family: 'Fira Code', monospace; font-size: 1rem; line-height: 1.6; color: #00f2fe; margin-bottom: 20px; white-space: pre-wrap;}
+        
+        .code-box { display: none; background: rgba(0,0,0,0.4); padding: 20px; border-left: 4px solid #4facfe; border-radius: 8px; font-size: 1.1rem; position: relative; font-family: 'Fira Code', monospace; }
+        .code-box input { background: transparent; border: none; border-bottom: 2px solid #fa709a; color: #fff; font-family: 'Fira Code', monospace; font-size: 1.1rem; width: 100px; outline: none; text-align: center; margin: 0 5px;}
+        .code-box input:focus { border-bottom-color: #4facfe; }
+
+        .execute-btn { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border: none; padding: 12px 20px; font-family: 'Fira Code', monospace; font-weight: 900; font-size: 1rem; cursor: pointer; transition: all 0.2s; border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); width: 100%; margin-top: 20px;}
+        .execute-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 242, 254, 0.5); }
+
+        .hint-btn { background: rgba(255,255,255,0.1); color: #fa709a; border: 1px solid #fa709a; padding: 8px 15px; font-family: 'Fira Code', monospace; font-weight: bold; font-size: 0.8rem; cursor: pointer; border-radius: 6px; margin-top: 15px; width: 100%; transition: 0.3s;}
+        .hint-btn:hover:not(:disabled) { background: #fa709a; color: white; }
+        .hint-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: #555; color: #aaa; }
+        .hint-box { display: none; margin-top: 10px; background: rgba(250, 112, 154, 0.1); border-left: 3px solid #fa709a; padding: 10px; border-radius: 4px; font-size: 0.9rem; color: #e2e8f0; }
+
+        /* Animations */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes playerAttack { 0% { transform: translateX(0); } 50% { transform: translateX(50px) scale(1.1); } 100% { transform: translateX(0); } }
+        @keyframes enemyAttack { 0% { transform: translateX(0); } 50% { transform: translateX(-50px) scale(1.1); } 100% { transform: translateX(0); } }
+        @keyframes takeDamage { 0%, 100% { filter: brightness(1); transform: translateX(0); } 25% { filter: brightness(1.5) drop-shadow(0 0 10px red); transform: translateX(-10px) rotate(-5deg); } 75% { transform: translateX(10px) rotate(5deg); } }
+
+        .floating-damage { position: absolute; font-family: 'Fira Code', monospace; font-size: 1.5rem; font-weight: 900; animation: floatUp 1s forwards; pointer-events: none; opacity: 0; z-index: 100; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-50px) scale(1.5); opacity: 0; } }
+
+        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.9rem; }
+        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
+
+        @media (max-width: 768px) { .console-container { grid-template-columns: 1fr; } .arena-container { gap: 10px; } .avatar { width: 70px; height: 70px; font-size: 2.5rem; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shape shape-1"></div><div class="bg-shape shape-2"></div><div class="bg-shape shape-3"></div>
+
+    <div id="game-container">
+        
+        <div class="game-header">
+            <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
+            <div class="sys-stats">
+                <div class="stat-box env-badge">ENV: <span id="ui-env">BOOTING</span></div>
+                <div class="stat-box level-badge">LEVEL: <span id="ui-level">1</span> / 3</div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="text-align: center;">
+            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-khanda" style="color: #4facfe;"></i> KERNEL PANIC RPG</h2>
+            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Defeat malware entities in turn-based combat using C syntax attacks.</p>
+        </div>
+
+        <div class="arena-container">
+            <div class="entity-card">
+                <div class="avatar player-avatar" id="player">🧑‍💻</div>
+                <div class="entity-name">OPERATOR (YOU)</div>
+                <div class="hp-box"><div class="hp-bar" id="player-hp-bar"></div></div>
+                <div class="hp-numbers" id="player-hp-num">100/100</div>
+            </div>
+            
+            <div class="entity-card">
+                <div class="avatar enemy-avatar" id="enemy">❓</div>
+                <div class="entity-name" id="enemy-name">???</div>
+                <div class="hp-box"><div class="hp-bar" id="enemy-hp-bar"></div></div>
+                <div class="hp-numbers" id="enemy-hp-num">???/???</div>
+            </div>
+        </div>
+
+        <div class="console-container">
+            <div class="menu-box" id="menu-box">
+                <button class="attack-btn btn-easy" onclick="startAttack('easy')">> BASIC ATTACK<br><span style="font-size: 0.75rem;">[EASY: 20 DMG]</span></button>
+                <button class="attack-btn btn-med" onclick="startAttack('medium')">> LOGIC STRIKE<br><span style="font-size: 0.75rem;">[MEDIUM: 30 DMG]</span></button>
+                <button class="attack-btn btn-hard" onclick="startAttack('hard')">> KERNEL SMASH<br><span style="font-size: 0.75rem;">[HARD: 40 DMG]</span></button>
+            </div>
+
+            <div class="action-screen">
+                <div class="dialogue" id="dialogue">System ready. Awaiting command...</div>
+                
+                <div class="code-box" id="code-box">
+                    <span style="color: #a0aec0; font-size: 0.85rem;">Complete the syntax to cast:</span><br><br>
+                    <span id="code-prefix"></span>
+                    <input type="text" id="spell-input" autocomplete="off" spellcheck="false">
+                    <span id="code-suffix"></span>
+                    
+                    <button class="execute-btn" onclick="executeSpell()"><i class="fa-solid fa-bolt"></i> EXECUTE SPELL</button>
+
+                    <button class="hint-btn" id="hint-btn" onclick="useHint()">[?] DECRYPT HINT (3 LEFT)</button>
+                    <div class="hint-box" id="hint-box">
+                        <div style="color: #fa709a; font-weight: bold; margin-bottom: 5px;">:: SYSTEM ASSIST OVERRIDE ::</div>
+                        <div id="hint-text"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.4); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6); background: rgba(255,255,255,0.9); border-radius: 16px;">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(67,233,123,0.4);"><i class="fa-solid fa-shield-virus"></i> SYSTEM SECURED</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">You have defeated the Data Titan.<br>Your logic is flawless.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c; border: none; padding: 15px 35px; font-size: 1.1rem;" onclick="window.location.href='index.html'">RETURN TO OS HUB</button>
+        </div>
+    </div>
+
+    <div id="defeat-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid #ff0844; box-shadow: 0 20px 60px rgba(255,8,68, 0.4), inset 0 0 30px rgba(255,8,68,0.3); background: rgba(255,255,255,0.95); border-radius: 16px;">
+            <h2 style="color: #ff0844; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(255,8,68,0.4);"><i class="fa-solid fa-skull"></i> DELETED</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;" id="defeat-desc">You were deleted by the malware.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #ff0844, #ffb199); color: white; border: none; padding: 15px 35px; font-size: 1.1rem;" onclick="location.reload()">REBOOT MODULE</button>
+        </div>
+    </div>
+
+    <script src="audio-manager.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+            const urlParams = new URLSearchParams(window.location.search);
+            document.getElementById('ui-env').innerText = (urlParams.get('lang') || 'c').toUpperCase();
+
+            let currentLevel = 0; let player = { hp: 100, maxHp: 100 }; let hintsRemaining = 3; let currentSpell = null; let isExecuting = false; 
+            
+            const levels = [
+                { name: "SYNTAX BUG", maxHp: 80, avatar: "👾", color: "#43e97b", enemyDmg: 15 },
+                { name: "LOGIC WORM", maxHp: 150, avatar: "🐛", color: "#fa709a", enemyDmg: 25 },
+                { name: "DATA TITAN", maxHp: 240, avatar: "🤖", color: "#ff0844", enemyDmg: 35 }
+            ];
+            let enemy = { hp: 0, maxHp: 0, name: "", avatar: "", enemyDmg: 0 };
+
+            // Pure C-Syntax Question Bank ported directly from C-Break OS
+            const questionBank = {
+                easy: [ 
+                    { id: "e1", prefix: 'printf("Hello', suffix: ');', answer: '"', hint: 'Strings in C must be enclosed in double quotes.' }, 
+                    { id: "e2", prefix: 'int health ', suffix: ' 100;', answer: '=', hint: 'Use the assignment operator to set a value.' }, 
+                    { id: "e3", prefix: 'char grade = ', suffix: 'A\';', answer: '\'', hint: 'Single characters require single quotes.' }, 
+                    { id: "e4", prefix: '#include <stdio.', suffix: '>', answer: 'h', hint: 'Standard I/O is a header (.h) file.' }, 
+                    { id: "e5", prefix: 'int score = 50', suffix: '', answer: ';', hint: 'Every statement in C must end with a semicolon.' }, 
+                    { id: "e6", prefix: 'scanf("%d"', suffix: ' &health);', answer: ',', hint: 'Separate arguments in a function with a comma.' },
+                    { id: "e7", prefix: 'void main(', suffix: ' {', answer: ')', hint: 'Function declarations need opening and closing parentheses.' }, 
+                    { id: "e8", prefix: 'float pi = 3.', suffix: '4;', answer: '1', hint: 'Pi is 3.14...' }, 
+                    { id: "e9", prefix: 'printf("\\', suffix: '"); // newline', answer: 'n', hint: 'The escape sequence for a newline is \\n' },
+                    { id: "e10", prefix: 'return ', suffix: ';', answer: '0', hint: 'A successful main function traditionally returns zero.' }
+                ],
+                medium: [ 
+                    { id: "m1", prefix: 'if(hp ', suffix: ' 0)', answer: '<=', hint: 'Less than or equal to operator.' }, 
+                    { id: "m2", prefix: 'for(int i=0; i<10; i', suffix: ')', answer: '++', hint: 'Increment operator to add 1.' }, 
+                    { id: "m3", prefix: 'int arr[', suffix: '] = {1, 2, 3};', answer: '3', hint: 'The array has three elements.' }, 
+                    { id: "m4", prefix: 'while(alive ', suffix: ' true)', answer: '==', hint: 'The equality check requires two equals signs.' }, 
+                    { id: "m5", prefix: 'if(x != ', suffix: ') // if not zero', answer: '0', hint: 'Zero.' }, 
+                    { id: "m6", prefix: 'do { x++; } ', suffix: '(x < 5);', answer: 'while', hint: 'A do-while loop.' },
+                    { id: "m7", prefix: 'switch(choice', suffix: ' {', answer: ')', hint: 'Close the parentheses for the switch statement.' }, 
+                    { id: "m8", prefix: 'else ', suffix: ' (x == 1)', answer: 'if', hint: 'To chain conditions, use "else if".' }, 
+                    { id: "m12", prefix: 'if(a > b ', suffix: ' b > c) // AND', answer: '&&', hint: 'Logical AND operator.' },
+                    { id: "m13", prefix: 'if(x == 1 ', suffix: ' x == 2) // OR', answer: '||', hint: 'Logical OR operator.' }
+                ],
+                hard: [ 
+                    { id: "h1", prefix: 'int ', suffix: 'ptr = &enemy;', answer: '*', hint: 'Declare a pointer using an asterisk.' }, 
+                    { id: "h2", prefix: 'ptr = (int*)', suffix: '(sizeof(int));', answer: 'malloc', hint: 'Memory allocation function.' }, 
+                    { id: "h3", prefix: 'enemy', suffix: 'hp -= 40;', answer: '->', altAnswer: '.', hint: 'Arrow operator (->) to access struct members from a pointer.' }, 
+                    { id: "h4", prefix: 'scanf("%d", ', suffix: 'damage);', answer: '&', hint: 'Address-of operator.' }, 
+                    { id: "h5", prefix: 'free(', suffix: ');', answer: 'ptr', hint: 'Pass the pointer to free memory.' }, 
+                    { id: "h6", prefix: 'FILE *fp = ', suffix: '("data", "r");', answer: 'fopen', hint: 'File open function.' },
+                    { id: "h13", prefix: 'int ', suffix: 'double_ptr = &ptr;', answer: '**', hint: 'A pointer to a pointer uses two asterisks.' }, 
+                    { id: "h14", prefix: '', suffix: '(struct Player)', answer: 'sizeof', hint: 'Returns the byte size of a type.' },
+                    { id: "h23", prefix: 'int x = 5 ', suffix: ' 1; // bit left shift', answer: '<<', hint: 'Shift bits to the left to multiply by 2.' },
+                    { id: "h32", prefix: 'if(ptr == ', suffix: ') return; // check null', answer: 'NULL', hint: 'Check if the pointer points to nothing.' }
+                ]
+            };
+
+            let usedQuestions = JSON.parse(localStorage.getItem('mb_rpg_spells')) || [];
+
+            const elDialogue = document.getElementById('dialogue'), elCodeBox = document.getElementById('code-box'), elInput = document.getElementById('spell-input'), menuBox = document.getElementById('menu-box'), elEnemyAvatar = document.getElementById('enemy'), elPlayerAvatar = document.getElementById('player');
+            const hintBtn = document.getElementById('hint-btn'), hintBox = document.getElementById('hint-box'), hintText = document.getElementById('hint-text');
+
+            function initLevel() {
+                if (currentLevel >= levels.length) return;
+
+                const levelData = levels[currentLevel];
+                enemy.name = levelData.name; enemy.maxHp = levelData.maxHp; enemy.hp = levelData.maxHp; enemy.enemyDmg = levelData.enemyDmg;
+                
+                document.getElementById('ui-level').innerText = currentLevel + 1;
+                document.getElementById('enemy-name').innerText = enemy.name;
+                elEnemyAvatar.innerText = levelData.avatar; elEnemyAvatar.style.borderColor = levelData.color; 
+                elEnemyAvatar.style.boxShadow = `0 0 20px ${levelData.color}`;
+                
+                if(currentLevel === 1) { player.maxHp = 150; player.hp = 150; } else if (currentLevel === 2) { player.maxHp = 200; player.hp = 200; }
+                
+                updateHUD();
+                
+                elDialogue.style.color = "#00f2fe"; 
+                elDialogue.innerText = currentLevel > 0 ? `> LEVEL UP! Max HP increased to ${player.maxHp}.\n\nA wild ${enemy.name} appeared! Select your attack.` : `A wild ${enemy.name} appeared! Select your attack.`;
+                
+                menuBox.style.opacity = '1'; menuBox.style.pointerEvents = 'auto';
+                isExecuting = false; 
+            }
+
+            function updateHUD() {
+                document.getElementById('player-hp-bar').style.width = Math.max(0, (player.hp / player.maxHp) * 100) + "%";
+                document.getElementById('player-hp-num').innerText = `${Math.max(0, player.hp)}/${player.maxHp}`;
+                document.getElementById('enemy-hp-bar').style.width = Math.max(0, (enemy.hp / enemy.maxHp) * 100) + "%";
+                document.getElementById('enemy-hp-num').innerText = `${Math.max(0, enemy.hp)}/${enemy.maxHp}`;
+                document.getElementById('player-hp-bar').style.background = player.hp <= (player.maxHp * 0.3) ? "linear-gradient(90deg, #ff0844, #ffb199)" : "linear-gradient(90deg, #4facfe, #00f2fe)";
+            }
+
+            window.startAttack = function(difficulty) {
+                if(isExecuting) return;
+                if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                menuBox.style.opacity = '0.3'; menuBox.style.pointerEvents = 'none';
+
+                let availableSpells = questionBank[difficulty].filter(spell => !usedQuestions.includes(spell.id));
+                if (availableSpells.length === 0) { 
+                    const tierIds = questionBank[difficulty].map(s => s.id);
+                    usedQuestions = usedQuestions.filter(id => !tierIds.includes(id)); 
+                    availableSpells = questionBank[difficulty]; 
+                }
+
+                currentSpell = availableSpells[Math.floor(Math.random() * availableSpells.length)];
+                usedQuestions.push(currentSpell.id);
+                localStorage.setItem('mb_rpg_spells', JSON.stringify(usedQuestions));
+                
+                if(difficulty === 'easy') currentSpell.damage = 20;
+                if(difficulty === 'medium') currentSpell.damage = 30;
+                if(difficulty === 'hard') currentSpell.damage = 40;
+
+                hintBox.style.display = 'none'; hintText.innerText = '';
+                elDialogue.style.display = 'none'; elCodeBox.style.display = 'block';
+                document.getElementById('code-prefix').innerText = currentSpell.prefix; document.getElementById('code-suffix').innerText = currentSpell.suffix;
+                elInput.value = ''; elInput.focus();
+            }
+
+            window.useHint = function() {
+                if (hintsRemaining > 0 && currentSpell && !isExecuting) {
+                    hintsRemaining--; if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                    hintBtn.innerText = `[?] DECRYPT HINT (${hintsRemaining} LEFT)`;
+                    hintText.innerText = `> ${currentSpell.hint}`;
+                    hintBox.style.display = 'block'; 
+                    if (hintsRemaining <= 0) { hintBtn.disabled = true; hintBtn.innerText = `[X] NO HINTS REMAINING`; }
+                    elInput.focus();
+                }
+            }
+
+            window.executeSpell = async function() {
+                if (isExecuting || !currentSpell) return; 
+                isExecuting = true; 
+                
+                const userInput = elInput.value.replace(/\s+/g, '');
+                const correctAnswer = currentSpell.answer.replace(/\s+/g, '');
+                const altAnswer = currentSpell.altAnswer ? currentSpell.altAnswer.replace(/\s+/g, '') : null;
+                
+                elCodeBox.style.display = 'none'; 
+                elDialogue.style.display = 'block';
+
+                if(userInput === correctAnswer || userInput === altAnswer) {
+                    elDialogue.style.color = "#43e97b"; 
+                    elDialogue.innerText = "> SYNTAX CORRECT.\nEXECUTING...";
+                    
+                    await sleep(600); 
+                    
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                    elPlayerAvatar.style.animation = "none"; void elPlayerAvatar.offsetWidth; 
+                    elPlayerAvatar.style.animation = "playerAttack 0.6s forwards"; 
+                    
+                    await sleep(300); 
+                    
+                    enemy.hp -= currentSpell.damage; 
+                    updateHUD();
+                    elEnemyAvatar.style.animation = "takeDamage 0.6s"; 
+                    showDamageNumber(currentSpell.damage, 'enemy', '#43e97b');
+                    elDialogue.innerText = `> SUCCESS! Dealt ${currentSpell.damage} DMG.`;
+                    
+                    await sleep(1500); 
+                    
+                    if(enemy.hp <= 0) {
+                        elEnemyAvatar.style.opacity = '0';
+                        
+                        if(currentLevel >= levels.length - 1) {
+                            // --- AUDIO & SAVE STATE LOGIC ---
+                            if(typeof AudioEngine !== 'undefined') {
+                                AudioEngine.playSound('success');
+                                AudioEngine.saveProgress('RPG Cleared', 'Cleared');
+                            }
+                            document.getElementById('victory-modal').style.display = 'flex';
+                        } else {
+                            if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('success');
+                            elDialogue.style.color = "#00f2fe"; 
+                            elDialogue.innerText = `> ${enemy.name} DELETED.\nPREPARING NEXT LEVEL...`;
+                            await sleep(2000); 
+                            currentLevel++; 
+                            elEnemyAvatar.style.opacity = '1'; 
+                            initLevel();
+                        }
+                    } else {
+                        await executeEnemyTurn(); 
+                    }
+                } else {
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                    elDialogue.style.color = "#ff0844"; 
+                    elDialogue.innerText = "> SYNTAX ERROR.\nATTACK FIZZLED.";
+                    await sleep(1500);
+                    await executeEnemyTurn();
+                }
+            }
+
+            async function executeEnemyTurn() {
+                elDialogue.style.color = "#fa709a"; 
+                elDialogue.innerText = `> ${enemy.name} counter-attacks!`;
+                
+                await sleep(1000); 
+                
+                if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
+                elEnemyAvatar.style.animation = "none"; void elEnemyAvatar.offsetWidth; 
+                elEnemyAvatar.style.animation = "enemyAttack 0.6s forwards";
+                
+                await sleep(300); 
+                
+                if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                const dmg = enemy.enemyDmg;
+                player.hp -= dmg; 
+                updateHUD();
+                elPlayerAvatar.style.animation = "takeDamage 0.6s"; 
+                showDamageNumber(dmg, 'player', '#ff0844');
+                elDialogue.style.color = "#ff0844"; 
+                elDialogue.innerText = `> SYSTEM BREACH!\nYou took ${dmg} DMG!`;
+                
+                await sleep(1500); 
+                
+                if(player.hp <= 0) {
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                    document.getElementById('defeat-modal').style.display = 'flex';
+                    document.getElementById('defeat-desc').innerText = `You were deleted by the ${enemy.name}.\nReboot to try again.`;
+                    isExecuting = false; 
+                } else {
+                    resetTurn();
+                }
+            }
+
+            function resetTurn() {
+                menuBox.style.opacity = '1'; menuBox.style.pointerEvents = 'auto';
+                elDialogue.style.color = "#00f2fe"; elDialogue.innerText = "Awaiting your next command...";
+                elPlayerAvatar.style.animation = "float 2.5s infinite ease-in-out"; elEnemyAvatar.style.animation = "float 2s infinite ease-in-out reverse";
+                isExecuting = false; 
+            }
+
+            function showDamageNumber(amount, targetId, color) {
+                const target = document.getElementById(targetId).parentElement, floatDmg = document.createElement('div');
+                floatDmg.className = 'floating-damage'; floatDmg.style.color = color; floatDmg.innerText = "-" + amount;
+                target.appendChild(floatDmg); setTimeout(() => floatDmg.remove(), 1000);
+            }
+
+            elInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); window.executeSpell(); } });
+
+            // Initialize Game
+            initLevel();
+        });
+    </script>
+</body>
+</html>

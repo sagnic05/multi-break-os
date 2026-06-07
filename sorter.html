@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Bin Sorter | Multi-Break OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
+    
+    <style>
+        /* ADDED: user-select: none; to prevent accidental highlighting during rapid clicks */
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none; }
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
+        .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
+        
+        #game-container { max-width: 900px; margin: 40px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
+        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; font-weight: 900; color: #1a202c;}
+        
+        .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
+        .score-badge { color: #4facfe; border-color: rgba(79, 172, 254, 0.4);}
+
+        .payload-zone { display: flex; justify-content: center; align-items: center; height: 280px; margin-bottom: 40px; perspective: 1000px; }
+        .payload-card { background: linear-gradient(135deg, #1a202c, #2d3748); color: #00f2fe; font-family: 'Fira Code', monospace; font-size: 2.2rem; padding: 40px 60px; border-radius: 20px; border: 2px solid rgba(0, 242, 254, 0.6); box-shadow: 0 15px 40px rgba(0, 242, 254, 0.2), inset 0 0 25px rgba(0,0,0,0.6); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); text-align: center; min-width: 380px; max-width: 90%; word-wrap: break-word; text-shadow: 0 0 10px rgba(0,242,254,0.4); }
+
+        .bins-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; position: relative; z-index: 20; }
+        .bin-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.9); border-bottom: 1px solid rgba(255,255,255,0.3); border-right: 1px solid rgba(255,255,255,0.3); padding: 25px 15px; border-radius: 16px; font-family: 'Fira Code', monospace; font-size: 1.15rem; font-weight: 900; color: #1a202c; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 6px 15px rgba(31, 38, 135, 0.05), inset 0 0 10px rgba(255,255,255,0.3); position: relative; z-index: 30; }
+        .bin-btn:hover { transform: translateY(-6px); background: linear-gradient(135deg, rgba(79, 172, 254, 0.7), rgba(0, 242, 254, 0.7)); border-color: transparent; box-shadow: 0 12px 30px rgba(0, 242, 254, 0.3), inset 0 0 15px rgba(255,255,255,0.4); color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+        @keyframes correctFlash { 0% { transform: scale(1); box-shadow: 0 0 0 transparent; border-color: #00f2fe; } 50% { transform: scale(1.05); box-shadow: 0 0 50px #43e97b, inset 0 0 30px #43e97b; border-color: #43e97b; color: #43e97b; text-shadow: 0 0 15px #43e97b;} 100% { transform: scale(1); box-shadow: 0 0 0 transparent; border-color: #00f2fe; } }
+        @keyframes wrongShake { 0%, 100% { transform: translateX(0); box-shadow: 0 0 0 transparent; border-color: #00f2fe; } 20%, 60% { transform: translateX(-15px); box-shadow: 0 0 40px #ff0844, inset 0 0 20px #ff0844; border-color: #ff0844; color: #ff0844; text-shadow: 0 0 15px #ff0844;} 40%, 80% { transform: translateX(15px); box-shadow: 0 0 40px #ff0844, inset 0 0 20px #ff0844; border-color: #ff0844; color: #ff0844; text-shadow: 0 0 15px #ff0844;} }
+
+        .anim-correct { animation: correctFlash 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .anim-wrong { animation: wrongShake 0.4s ease-in-out forwards; }
+        
+        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 900; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.9rem; }
+        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shape shape-1"></div><div class="bg-shape shape-2"></div><div class="bg-shape shape-3"></div>
+
+    <div id="game-container">
+        <div class="game-header">
+            <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
+            <div class="sys-stats">
+                <!-- ADDED translate="no" to prevent browser extensions from destroying the score elements -->
+                <div class="stat-box env-badge" translate="no">ENV: <span id="ui-env">BOOTING</span></div>
+                <div class="stat-box score-badge" translate="no">PAYLOADS: <span id="ui-score">0</span> / 20</div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="text-align: center; margin-bottom: 30px; padding: 25px;">
+            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-boxes-stacked" style="color: #4facfe;"></i> MEMORY BIN SORTER</h2>
+            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Target active payload and route to native data register.</p>
+        </div>
+
+        <div class="payload-zone"><div class="payload-card" id="active-payload">Connecting...</div></div>
+        <div class="bins-grid" id="bins-container"></div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.2); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6);">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(67,233,123,0.4);"><i class="fa-solid fa-shield-check"></i> SECURED</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">Memory safely allocated.<br>Mega Payload Sequence cleared.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border: none; padding: 15px 35px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(67, 233, 123, 0.4);" onclick="window.location.href='index.html'">RETURN TO OS</button>
+        </div>
+    </div>
+
+    <!-- REQUIRE AUDIO ENGINE FOR SAVE STATES -->
+    <script src="audio-manager.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const levelData = {
+                python: {
+                    bins: ['str', 'int', 'float', 'bool', 'list'],
+                    payloads: [
+                        { val: '"Hello"', type: 'str' }, { val: "'Python'", type: 'str' }, { val: 'str(42)', type: 'str' }, { val: 'f"Score: {x}"', type: 'str' }, { val: '"""Docstring"""', type: 'str' }, { val: '"100"', type: 'str' },
+                        { val: '404', type: 'int' }, { val: '-99', type: 'int' }, { val: '0', type: 'int' }, { val: '1000000', type: 'int' }, { val: 'int("5")', type: 'int' }, { val: 'len([1,2])', type: 'int' },
+                        { val: '3.1415', type: 'float' }, { val: '0.001', type: 'float' }, { val: '-1.5', type: 'float' }, { val: 'float(10)', type: 'float' }, { val: '2.0', type: 'float' }, { val: '1e-5', type: 'float' },
+                        { val: 'True', type: 'bool' }, { val: 'False', type: 'bool' }, { val: 'bool(1)', type: 'bool' }, { val: '10 > 5', type: 'bool' }, { val: '"a" in "abc"', type: 'bool' }, { val: 'not True', type: 'bool' },
+                        { val: '[1, 2, 3]', type: 'list' }, { val: '["a", "b"]', type: 'list' }, { val: '[]', type: 'list' }, { val: 'list()', type: 'list' }, { val: '[x for x in range(5)]', type: 'list' }, { val: '[True, False]', type: 'list' }
+                    ]
+                },
+                java: {
+                    bins: ['String', 'int', 'double', 'boolean', 'Array'],
+                    payloads: [
+                        { val: '"System.out"', type: 'String' }, { val: '"Java"', type: 'String' }, { val: 'String.valueOf(5)', type: 'String' }, { val: '"Data"', type: 'String' }, { val: '""', type: 'String' }, { val: '"Null"', type: 'String' },
+                        { val: '1024', type: 'int' }, { val: '0', type: 'int' }, { val: '-5', type: 'int' }, { val: 'Integer.MAX_VALUE', type: 'int' }, { val: 'Math.abs(-10)', type: 'int' }, { val: '42', type: 'int' },
+                        { val: '99.99', type: 'double' }, { val: '3.14d', type: 'double' }, { val: '0.0', type: 'double' }, { val: 'Math.PI', type: 'double' }, { val: '-1.5d', type: 'double' }, { val: 'Double.NaN', type: 'double' },
+                        { val: 'true', type: 'boolean' }, { val: 'false', type: 'boolean' }, { val: 'Boolean.TRUE', type: 'boolean' }, { val: '10 == 10', type: 'boolean' }, { val: '!false', type: 'boolean' }, { val: 'x != y', type: 'boolean' },
+                        { val: 'new int[]{1, 2}', type: 'Array' }, { val: 'String[] args', type: 'Array' }, { val: 'new double[5]', type: 'Array' }, { val: 'byte[] buffer', type: 'Array' }, { val: '{"A", "B"}', type: 'Array' }, { val: 'new boolean[2]', type: 'Array' }
+                    ]
+                },
+                javascript: {
+                    bins: ['String', 'Number', 'Boolean', 'Array', 'Object'],
+                    payloads: [
+                        { val: '"console"', type: 'String' }, { val: '`Template`', type: 'String' }, { val: "'JS'", type: 'String' }, { val: 'String(10)', type: 'String' }, { val: '""', type: 'String' }, { val: '"True"', type: 'String' },
+                        { val: '42', type: 'Number' }, { val: '3.14', type: 'Number' }, { val: 'NaN', type: 'Number' }, { val: 'Infinity', type: 'Number' }, { val: '-1', type: 'Number' }, { val: '0', type: 'Number' },
+                        { val: 'true', type: 'Boolean' }, { val: 'false', type: 'Boolean' }, { val: '!0', type: 'Boolean' }, { val: '10 > 5', type: 'Boolean' }, { val: 'Boolean("")', type: 'Boolean' }, { val: 'x === y', type: 'Boolean' },
+                        { val: '[1, 2, 3]', type: 'Array' }, { val: '[]', type: 'Array' }, { val: 'new Array(5)', type: 'Array' }, { val: 'Array.from("hi")', type: 'Array' }, { val: '["a", 1]', type: 'Array' }, { val: '[true]', type: 'Array' },
+                        { val: '{ name: "OS" }', type: 'Object' }, { val: '{}', type: 'Object' }, { val: 'Object.keys()', type: 'Object' }, { val: 'new Date()', type: 'Object' }, { val: 'Math', type: 'Object' }, { val: 'JSON.parse("{}")', type: 'Object' }
+                    ]
+                },
+                cpp: {
+                    bins: ['string', 'int', 'float', 'bool', 'vector'],
+                    payloads: [
+                        { val: '"std::cout"', type: 'string' }, { val: '"C++"', type: 'string' }, { val: '"Data"', type: 'string' }, { val: 'to_string(5)', type: 'string' }, { val: '""', type: 'string' }, { val: '"Null"', type: 'string' },
+                        { val: '256', type: 'int' }, { val: '-1', type: 'int' }, { val: '0', type: 'int' }, { val: 'sizeof(char)', type: 'int' }, { val: 'INT_MAX', type: 'int' }, { val: '10', type: 'int' },
+                        { val: '9.81f', type: 'float' }, { val: '0.0f', type: 'float' }, { val: '-3.14f', type: 'float' }, { val: '1.0f', type: 'float' }, { val: '2.5f', type: 'float' }, { val: '1e3f', type: 'float' },
+                        { val: 'true', type: 'bool' }, { val: 'false', type: 'bool' }, { val: '1 == 1', type: 'bool' }, { val: '!true', type: 'bool' }, { val: 'x > y', type: 'bool' }, { val: 'ptr != nullptr', type: 'bool' },
+                        { val: 'std::vector<int>', type: 'vector' }, { val: 'vector<string>()', type: 'vector' }, { val: 'vector<float> v', type: 'vector' }, { val: '{1, 2, 3}', type: 'vector' }, { val: 'v.push_back()', type: 'vector' }, { val: 'vector<bool>', type: 'vector' }
+                    ]
+                },
+                kotlin: {
+                    bins: ['String', 'Int', 'Double', 'Boolean', 'List'],
+                    payloads: [
+                        { val: '"println()"', type: 'String' }, { val: '"Android"', type: 'String' }, { val: '"${val}"', type: 'String' }, { val: '5.toString()', type: 'String' }, { val: '""', type: 'String' }, { val: '"Null"', type: 'String' },
+                        { val: '8080', type: 'Int' }, { val: '-5', type: 'Int' }, { val: '0', type: 'Int' }, { val: 'Int.MAX_VALUE', type: 'Int' }, { val: '10', type: 'Int' }, { val: '"5".toInt()', type: 'Int' },
+                        { val: '19.99', type: 'Double' }, { val: '0.0', type: 'Double' }, { val: '-1.5', type: 'Double' }, { val: 'Math.PI', type: 'Double' }, { val: '2.0', type: 'Double' }, { val: 'Double.NaN', type: 'Double' },
+                        { val: 'true', type: 'Boolean' }, { val: 'false', type: 'Boolean' }, { val: '1 > 0', type: 'Boolean' }, { val: '!false', type: 'Boolean' }, { val: 'x == y', type: 'Boolean' }, { val: 'list.isEmpty()', type: 'Boolean' },
+                        { val: 'listOf(1, 2)', type: 'List' }, { val: 'mutableListOf()', type: 'List' }, { val: 'emptyList()', type: 'List' }, { val: 'arrayListOf()', type: 'List' }, { val: 'listOf("A")', type: 'List' }, { val: 'List(5) { 0 }', type: 'List' }
+                    ]
+                }
+            };
+
+            let currentLang = 'python'; 
+            let activeData = null;
+            let currentScore = 0;
+            const targetScore = 20; 
+            let currentPayload = null;
+            let isAnimating = false; 
+            let gameWon = false; 
+            
+            let payloadDeck = [];
+            function shuffle(array) {
+                let currentIndex = array.length, randomIndex;
+                while (currentIndex != 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+                }
+                return array;
+            }
+
+            const uiEnv = document.getElementById('ui-env'); const uiScore = document.getElementById('ui-score');
+            const payloadCard = document.getElementById('active-payload'); const binsContainer = document.getElementById('bins-container');
+            const victoryModal = document.getElementById('victory-modal');
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const requestedLang = urlParams.get('lang');
+                if (requestedLang && levelData[requestedLang]) currentLang = requestedLang;
+                activeData = levelData[currentLang];
+                uiEnv.innerText = currentLang.toUpperCase();
+                binsContainer.innerHTML = '';
+                activeData.bins.forEach(binType => {
+                    const btn = document.createElement('button'); btn.className = 'bin-btn'; btn.innerText = binType;
+                    btn.addEventListener('click', () => checkAnswer(binType));
+                    binsContainer.appendChild(btn);
+                });
+                loadNextPayload();
+            } catch (err) { console.error("Game failed:", err); }
+
+            function loadNextPayload() {
+                if (!activeData || gameWon) return;
+                
+                if (payloadDeck.length === 0) { payloadDeck = shuffle([...activeData.payloads]); }
+                
+                currentPayload = payloadDeck.pop();
+                payloadCard.innerText = currentPayload.val;
+                payloadCard.classList.remove('anim-correct', 'anim-wrong');
+                void payloadCard.offsetWidth; 
+                isAnimating = false;
+            }
+
+            function checkAnswer(selectedBin) {
+                if (!currentPayload || isAnimating || gameWon) return; 
+                isAnimating = true; 
+
+                if (selectedBin === currentPayload.type) {
+                    payloadCard.classList.add('anim-correct');
+                    currentScore++; uiScore.innerText = currentScore;
+                    
+                    if (currentScore >= targetScore) {
+                        gameWon = true; 
+                        
+                        if(typeof AudioEngine !== 'undefined') {
+                            AudioEngine.playSound('success');
+                            AudioEngine.saveProgress('Sorter Record', currentScore);
+                        }
+                        
+                        setTimeout(() => { victoryModal.style.display = 'flex'; }, 500);
+                    } else { setTimeout(loadNextPayload, 500); }
+                } else {
+                    payloadCard.classList.add('anim-wrong');
+                    if (currentScore > 0) currentScore--; uiScore.innerText = currentScore;
+                    setTimeout(loadNextPayload, 400); 
+                }
+            }
+        });
+    </script>
+</body>
+</html>

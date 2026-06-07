@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syntax Assembler | Multi-Break OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
+    
+    <style>
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none;}
+        .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
+        .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
+        
+        #game-container { max-width: 900px; margin: 40px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
+        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; }
+        
+        .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
+        .level-badge { color: #fa709a; border-color: rgba(250, 112, 154, 0.4);}
+        .rank-badge { color: #4facfe; border-color: rgba(79, 172, 254, 0.4);}
+
+        /* Standard Glass Intro Panel */
+        .glass-panel { background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05), inset 0 0 15px rgba(255,255,255,0.3); }
+
+        /* Main Game Panel (Bright Glass) */
+        .game-panel { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05), inset 0 0 15px rgba(255,255,255,0.3); margin-bottom: 40px; color: #1a202c; }
+        
+        .mission-header { text-align: center; margin-bottom: 25px; }
+        .category-tag { display: inline-block; background: rgba(0, 242, 254, 0.2); color: #0088cc; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 10px; font-family: 'Fira Code', monospace; font-weight: 900; letter-spacing: 1px;}
+        .mission-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; color: #1a202c;}
+        .mission-brief { color: #4a5568; font-family: 'Fira Code', monospace; font-size: 1rem; font-weight: 700;}
+
+        /* Puzzle Zones (Frosted Translucent) */
+        .puzzle-container { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.5); padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: inset 0 0 15px rgba(255,255,255,0.4);}
+        .zone-label { font-family: 'Fira Code', monospace; color: #4a5568; font-size: 0.85rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;}
+        .block-area { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 15px; background: rgba(255, 255, 255, 0.3); border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); margin-bottom: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.02);}
+
+        /* Clickable Blocks */
+        .code-block { background: rgba(255, 255, 255, 0.8); border: 2px solid #4facfe; color: #1a202c; font-family: 'Fira Code', monospace; font-weight: 800; font-size: 1.1rem; padding: 10px 18px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(79, 172, 254, 0.15); }
+        .code-block:hover { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border-color: transparent; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4); }
+
+        /* Terminal Entry Zone (Sleek Bright Glass) */
+        .terminal-zone { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); border-left: 5px solid #b224ef; padding: 20px; border-radius: 12px; display: none; margin-top: 20px; box-shadow: 0 10px 25px rgba(31, 38, 135, 0.05);}
+        .terminal-text { color: #b224ef; font-family: 'Fira Code', monospace; font-weight: 900; font-size: 0.95rem; margin-bottom: 15px;}
+        .input-row { display: flex; align-items: center; background: rgba(255,255,255,0.6); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.9); box-shadow: inset 0 0 8px rgba(0,0,0,0.05);}
+        .prompt { color: #fa709a; font-family: 'Fira Code', monospace; margin-right: 15px; font-weight: 900;}
+        .code-input { flex-grow: 1; background: transparent; border: none; color: #1a202c; font-family: 'Fira Code', monospace; font-size: 1.1rem; outline: none; font-weight: 800;}
+        
+        .action-btn { background: linear-gradient(135deg, #b224ef, #7579ff); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-family: 'Fira Code', monospace; font-weight: 900; cursor: pointer; margin-top: 15px; transition: all 0.2s; width: 100%; box-shadow: 0 5px 15px rgba(178, 36, 239, 0.3);}
+        .action-btn:hover { background: linear-gradient(135deg, #7579ff, #b224ef); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(178, 36, 239, 0.5); }
+
+        .feedback-text { text-align: center; margin-top: 20px; font-family: 'Fira Code', monospace; font-weight: 900; font-size: 1.1rem; height: 24px; }
+        
+        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.9rem; }
+        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
+
+        @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-10px); } 50% { transform: translateX(10px); } }
+        .anim-shake { animation: wrongShake 0.4s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shape shape-1"></div><div class="bg-shape shape-2"></div><div class="bg-shape shape-3"></div>
+
+    <div id="game-container">
+        
+        <div class="game-header">
+            <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
+            <div class="sys-stats">
+                <div class="stat-box env-badge">ENV: <span id="ui-env">BOOTING</span></div>
+                <div class="stat-box level-badge">LEVEL: <span id="ui-level">1</span> / 10</div>
+                <div class="stat-box rank-badge">RANK: <span id="ui-rank">Script Kiddie</span></div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="text-align: center; padding: 25px; margin-bottom: 30px;">
+            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-puzzle-piece" style="color: #4facfe;"></i> SYNTAX ASSEMBLER</h2>
+            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Reconstruct corrupted scripts by dragging syntax blocks into the buffer, then manually commit to the terminal.</p>
+        </div>
+
+        <div class="game-panel">
+            <div class="mission-header">
+                <div class="category-tag" id="level-category">BEGINNER</div>
+                <div class="mission-title" id="level-title">SYSTEM BOOT</div>
+                <div class="mission-brief" id="mission-text">Loading instructions...</div>
+            </div>
+
+            <div class="puzzle-container" id="puzzle-zone">
+                <div class="zone-label"><i class="fa-solid fa-shuffle"></i> Scrambled Syntax Buffer</div>
+                <div class="block-area" id="scrambled-blocks"></div>
+
+                <div class="zone-label" style="margin-top: 20px;"><i class="fa-solid fa-layer-group"></i> Assembly Buffer</div>
+                <div class="block-area" id="assembly-blocks"></div>
+            </div>
+
+            <div class="terminal-zone" id="terminal-zone">
+                <div class="terminal-text"><i class="fa-solid fa-check"></i> >> SYNTAX VERIFIED. MANUAL ENTRY REQUIRED.</div>
+                <div class="input-row">
+                    <span class="prompt">sys@core:~#</span>
+                    <input type="text" id="code-input" class="code-input" autocomplete="off" spellcheck="false" placeholder="Type the assembled code here...">
+                </div>
+                <button class="action-btn" onclick="checkFinalCode()"><i class="fa-solid fa-terminal"></i> COMMIT CODE</button>
+            </div>
+            
+            <div class="feedback-text" id="feedback"></div>
+        </div>
+    </div>
+
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.4); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6); background: rgba(255,255,255,0.9); border-radius: 16px;">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(67,233,123,0.4);"><i class="fa-solid fa-server"></i> MAINFRAME HACKED</h2>
+            <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">All 10 stages cleared.<br>You are a Kernel Master.</p>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c; border: none; padding: 15px 35px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(67, 233, 123, 0.4);" onclick="window.location.href='index.html'">RETURN TO OS HUB</button>
+        </div>
+    </div>
+
+    <script src="audio-manager.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const databases = {
+                python: {
+                    beg: [
+                        { title: "STANDARD OUTPUT", brief: "The system needs to speak. Assemble the syntax to print 'Hello'.", blocks: ["print", "(", "\"Hello\"", ")"], correctOrder: ["print", "(", "\"Hello\"", ")"], finalCode: "print(\"Hello\")" },
+                        { title: "DATA ALLOCATION", brief: "Variables store data. Declare 'hp' and set it to 100.", blocks: ["hp", "=", "100"], correctOrder: ["hp", "=", "100"], finalCode: "hp=100" },
+                        { title: "LIST CREATION", brief: "Create an array of numbers.", blocks: ["arr", "=", "[", "1, 2, 3", "]"], correctOrder: ["arr", "=", "[", "1, 2, 3", "]"], finalCode: "arr=[1,2,3]" }
+                    ],
+                    mid: [
+                        { title: "CONDITIONALS", brief: "Check if the user's score is exactly 10.", blocks: ["if", "score", "==", "10", ":"], correctOrder: ["if", "score", "==", "10", ":"], finalCode: "ifscore==10:" },
+                        { title: "ITERATION", brief: "Loop through items in a list.", blocks: ["for", "item", "in", "data", ":"], correctOrder: ["for", "item", "in", "data", ":"], finalCode: "foritemindata:" },
+                        { title: "WHILE LOOP", brief: "Loop continuously while power is active.", blocks: ["while", "power", ">", "0", ":"], correctOrder: ["while", "power", ">", "0", ":"], finalCode: "whilepower>0:" }
+                    ],
+                    adv: [
+                        { title: "FUNCTIONS", brief: "Define a function named calculate.", blocks: ["def", "calculate", "(", "val", "):"], correctOrder: ["def", "calculate", "(", "val", "):"], finalCode: "defcalculate(val):" },
+                        { title: "DICTIONARIES", brief: "Map a key to a value.", blocks: ["user", "=", "{", "'id': 1", "}"], correctOrder: ["user", "=", "{", "'id': 1", "}"], finalCode: "user={'id':1}" },
+                        { title: "ERROR HANDLING", brief: "Catch a generic exception.", blocks: ["except", "Exception", "as", "e", ":"], correctOrder: ["except", "Exception", "as", "e", ":"], finalCode: "exceptExceptionase:" }
+                    ],
+                    pro: [
+                        { title: "LIST COMPREHENSION", brief: "Generate a list in one line.", blocks: ["x", "=", "[i", "for i", "in range(5)]"], correctOrder: ["x", "=", "[i", "for i", "in range(5)]"], finalCode: "x=[iforiinrange(5)]" }
+                    ]
+                },
+                javascript: {
+                    beg: [
+                        { title: "STANDARD OUTPUT", brief: "Log 'Hello' to the console.", blocks: ["console.log", "(", "'Hello'", ")", ";"], correctOrder: ["console.log", "(", "'Hello'", ")", ";"], finalCode: "console.log('Hello');" },
+                        { title: "DATA ALLOCATION", brief: "Declare a constant 'hp' set to 100.", blocks: ["const", "hp", "=", "100", ";"], correctOrder: ["const", "hp", "=", "100", ";"], finalCode: "consthp=100;" },
+                        { title: "MATH OPERATOR", brief: "Add variable a to b.", blocks: ["let", "sum", "=", "a + b", ";"], correctOrder: ["let", "sum", "=", "a + b", ";"], finalCode: "letsum=a+b;" }
+                    ],
+                    mid: [
+                        { title: "CONDITIONALS", brief: "Check strict equality.", blocks: ["if", "(", "score", "===", "10", ")"], correctOrder: ["if", "(", "score", "===", "10", ")"], finalCode: "if(score===10)" },
+                        { title: "ITERATION", brief: "Standard for loop header.", blocks: ["for", "(let i=0;", "i<5;", "i++)"], correctOrder: ["for", "(let i=0;", "i<5;", "i++)"], finalCode: "for(leti=0;i<5;i++)" },
+                        { title: "ARROW FUNCTION", brief: "Create a simple arrow function.", blocks: ["const", "run", "=", "() =>", "{}"], correctOrder: ["const", "run", "=", "() =>", "{}"], finalCode: "construn=()=>{}" }
+                    ],
+                    adv: [
+                        { title: "PROMISES", brief: "Return a resolved promise.", blocks: ["return", "Promise", ".resolve", "(", ")", ";"], correctOrder: ["return", "Promise", ".resolve", "(", ")", ";"], finalCode: "returnPromise.resolve();" },
+                        { title: "DESTRUCTURING", brief: "Extract id from an object.", blocks: ["const", "{ id }", "=", "user", ";"], correctOrder: ["const", "{ id }", "=", "user", ";"], finalCode: "const{id}=user;" },
+                        { title: "DOM MANIPULATION", brief: "Select an element by ID.", blocks: ["document", ".getElementById", "(", "'hud'", ")"], correctOrder: ["document", ".getElementById", "(", "'hud'", ")"], finalCode: "document.getElementById('hud')" }
+                    ],
+                    pro: [
+                        { title: "ASYNC AWAIT", brief: "Await a fetch call.", blocks: ["const", "data", "=", "await", "fetch(url)", ";"], correctOrder: ["const", "data", "=", "await", "fetch(url)", ";"], finalCode: "constdata=awaitfetch(url);" }
+                    ]
+                }
+            };
+
+            const getLangData = (lang) => databases[lang] || databases['javascript'];
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentLang = urlParams.get('lang') || 'javascript';
+            document.getElementById('ui-env').innerText = currentLang.toUpperCase();
+            
+            const langDb = getLangData(currentLang);
+
+            function getRandomItems(array, count) {
+                const shuffled = [...array].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, count);
+            }
+
+            let beg = getRandomItems(langDb.beg, 3);
+            let mid = getRandomItems(langDb.mid, 3);
+            let adv = getRandomItems(langDb.adv, 3);
+            let pro = getRandomItems(langDb.pro, 1);
+
+            const levels = [
+                { category: "BEGINNER", rank: "Script Kiddie", ...beg[0] }, { category: "BEGINNER", rank: "Script Kiddie", ...beg[1] }, { category: "BEGINNER", rank: "Junior Hacker", ...beg[2] },
+                { category: "INTERMEDIATE", rank: "Logic Weaver", ...mid[0] }, { category: "INTERMEDIATE", rank: "Logic Weaver", ...mid[1] }, { category: "INTERMEDIATE", rank: "Data Architect", ...mid[2] },
+                { category: "ADVANCED", rank: "Memory Manipulator", ...adv[0] }, { category: "ADVANCED", rank: "Memory Manipulator", ...adv[1] }, { category: "ADVANCED", rank: "System Architect", ...adv[2] },
+                { category: "PRO LEVEL", rank: "Kernel Master", ...pro[0] }
+            ];
+
+            let currentLevel = 0;
+            let assembledSequence = [];
+
+            const elScrambled = document.getElementById('scrambled-blocks');
+            const elAssembly = document.getElementById('assembly-blocks');
+            const elTerminal = document.getElementById('terminal-zone');
+            const elPuzzle = document.getElementById('puzzle-zone');
+            const elInput = document.getElementById('code-input');
+            const elFeedback = document.getElementById('feedback');
+            const categoryTag = document.getElementById('level-category');
+
+            function loadLevel() {
+                if (currentLevel >= levels.length) {
+                    // --- SAVE STATE & AUDIO TRIGGER ---
+                    if(typeof AudioEngine !== 'undefined') {
+                        AudioEngine.playSound('success'); 
+                        AudioEngine.saveProgress('Assembler Cleared', 'Cleared');
+                    }
+                    document.getElementById('victory-modal').style.display = 'flex';
+                    return;
+                }
+
+                const level = levels[currentLevel];
+                document.getElementById('ui-level').innerText = currentLevel + 1;
+                document.getElementById('ui-rank').innerText = level.rank;
+                categoryTag.innerText = level.category;
+                document.getElementById('level-title').innerText = level.title;
+                document.getElementById('mission-text').innerText = level.brief;
+
+                let tagColor = level.category === "INTERMEDIATE" ? 'rgba(250, 112, 154, 0.2)' : level.category === "ADVANCED" ? 'rgba(178, 36, 239, 0.2)' : level.category === "PRO LEVEL" ? 'rgba(255, 8, 68, 0.2)' : 'rgba(0, 242, 254, 0.2)';
+                let textColor = level.category === "INTERMEDIATE" ? '#fa709a' : level.category === "ADVANCED" ? '#b224ef' : level.category === "PRO LEVEL" ? '#ff0844' : '#00a8ff';
+                categoryTag.style.background = tagColor;
+                categoryTag.style.color = textColor;
+
+                assembledSequence = [];
+                elTerminal.style.display = 'none'; elPuzzle.style.opacity = '1';
+                elAssembly.innerHTML = ''; elScrambled.innerHTML = ''; elInput.value = ''; elFeedback.innerText = '';
+
+                let shuffledBlocks = [...level.blocks].sort(() => Math.random() - 0.5);
+                shuffledBlocks.forEach(blockText => {
+                    let btn = document.createElement('div');
+                    btn.className = 'code-block'; btn.innerText = blockText;
+                    btn.onclick = () => { if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click'); moveToAssembly(btn, blockText); };
+                    elScrambled.appendChild(btn);
+                });
+            }
+
+            function moveToAssembly(btn, blockText) {
+                elScrambled.removeChild(btn);
+                btn.onclick = () => { if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click'); returnToScrambled(btn, blockText); };
+                elAssembly.appendChild(btn);
+                assembledSequence.push(blockText);
+                checkPuzzle();
+            }
+
+            function returnToScrambled(btn, blockText) {
+                elAssembly.removeChild(btn);
+                btn.onclick = () => { if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click'); moveToAssembly(btn, blockText); };
+                elScrambled.appendChild(btn);
+                assembledSequence = assembledSequence.filter(b => b !== blockText);
+                elFeedback.innerText = "";
+            }
+
+            function checkPuzzle() {
+                const level = levels[currentLevel];
+                if (assembledSequence.length === level.correctOrder.length) {
+                    let isCorrect = assembledSequence.every((val, i) => val === level.correctOrder[i]);
+                    if (isCorrect) {
+                        if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('success');
+                        elFeedback.style.color = "#b224ef"; 
+                        elFeedback.innerText = "SYNTAX VERIFIED. TERMINAL UNLOCKED.";
+                        elPuzzle.style.opacity = '0.5';
+                        elTerminal.style.display = 'block'; 
+                        elInput.focus();
+                    } else {
+                        if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                        elFeedback.style.color = "#ff0844";
+                        elFeedback.innerText = "LOGIC ERROR. REORDER THE BLOCKS.";
+                        document.querySelector('.game-panel').classList.add('anim-shake');
+                        setTimeout(()=> document.querySelector('.game-panel').classList.remove('anim-shake'), 400);
+                    }
+                }
+            }
+
+            window.checkFinalCode = function() {
+                const level = levels[currentLevel];
+                let userCode = elInput.value.replace(/\s+/g, '').replace(/'/g, '"');
+                let targetCode = level.finalCode.replace(/\s+/g, '').replace(/'/g, '"');
+
+                if (userCode === targetCode) {
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('success');
+                    elFeedback.style.color = "#4facfe"; 
+                    elFeedback.innerText = "CODE COMMITTED. ADVANCING...";
+                    currentLevel++;
+                    setTimeout(loadLevel, 1200);
+                } else {
+                    if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
+                    elFeedback.style.color = "#ff0844";
+                    elFeedback.innerText = "COMPILER ERROR. CHECK YOUR TYPING.";
+                    elTerminal.classList.add('anim-shake');
+                    setTimeout(()=> elTerminal.classList.remove('anim-shake'), 400);
+                }
+            }
+
+            elInput.addEventListener("keypress", (e) => { if (e.key === "Enter") { e.preventDefault(); checkFinalCode(); } });
+
+            // Initialize Game instantly without boot screen
+            loadLevel();
+        });
+    </script>
+</body>
+</html>
