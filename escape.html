@@ -4,70 +4,71 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminal Escape IDE | Multi-Break OS</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none;}
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #e0f2fe 0%, #fbcfe8 40%, #bae6fd 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none; margin: 0; overflow-x: hidden;}
         .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
         .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
         .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
         .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
         
-        #game-container { max-width: 1200px; margin: 20px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
+        /* COMPACT LAYTOP FIX APPLIED HERE */
+        #game-container { max-width: 1200px; margin: 10px auto; position: relative; z-index: 10; padding: 0 15px 15px 15px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 15px; }
         
-        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
-        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; }
-        
+        .stat-box { background: rgba(255,255,255,0.6); backdrop-filter: blur(15px); padding: 10px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,1); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.95rem; }
         .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
-        .glass-panel { background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05), inset 0 0 15px rgba(255,255,255,0.3); margin-bottom: 20px;}
-
-        .ide-wrapper { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
         
-        .telemetry-box { display: flex; flex-direction: column; gap: 15px; background: rgba(255, 255, 255, 0.25); border-radius: 16px; padding: 25px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 0 15px rgba(255,255,255,0.5); }
-        .telemetry-box h2 { margin: 0; color: #1a202c; font-size: 1.5rem; font-weight: 900;}
-        .status-label { font-size: 0.8rem; color: #4a5568; margin-bottom: 4px; text-transform: uppercase; font-family: 'Fira Code', monospace; font-weight: 800;}
-        .status-val { font-family: 'Fira Code', monospace; font-size: 1.6rem; font-weight: 900; color: #4facfe; }
-        
-        .timer-display { font-family: 'Fira Code', monospace; font-size: 2.5rem; font-weight: 900; color: #ff0844; text-shadow: 0 0 10px rgba(255,8,68,0.3); margin-top: 5px; text-align: center;}
-        .tier-badge-large { background: rgba(79, 172, 254, 0.2); border: 1px solid #4facfe; padding: 10px; border-radius: 8px; color: #00f2fe; text-align: center; font-weight: 900; font-size: 1.2rem; margin: 10px 0;}
+        .glass-panel { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,1); border-radius: 16px; padding: 15px 25px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05); margin-bottom: 15px;}
+        .glass-panel h2 { margin-top: 0; margin-bottom: 5px; font-size: 1.5rem; color: #1a202c; font-weight: 900;}
+        .glass-panel p { margin-bottom: 0; color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.9rem;}
 
-        .workspace { display: flex; flex-direction: column; gap: 20px; }
+        .ide-wrapper { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
         
-        .directive-box { background: rgba(255, 255, 255, 0.4); border-left: 5px solid #b224ef; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .directive-title { font-weight: 900; color: #b224ef; font-size: 1.1rem; margin-bottom: 8px; text-transform: uppercase; }
-        .directive-desc { font-family: 'Fira Code', monospace; font-size: 1rem; color: #1a202c; font-weight: 700; line-height: 1.5;}
-        .directive-params { margin-top: 10px; font-family: 'Fira Code', monospace; color: #fa709a; font-weight: 900; font-size: 0.9rem;}
+        .telemetry-box { display: flex; flex-direction: column; gap: 12px; background: rgba(255, 255, 255, 0.4); border-radius: 16px; padding: 15px; border: 1px solid rgba(255,255,255,0.9); }
+        .status-label { font-size: 0.75rem; color: #4a5568; margin-bottom: 2px; text-transform: uppercase; font-family: 'Fira Code', monospace; font-weight: 800;}
+        .status-val { font-family: 'Fira Code', monospace; font-size: 1.4rem; font-weight: 900; color: #4facfe; }
+        
+        .timer-display { font-family: 'Fira Code', monospace; font-size: 2.2rem; font-weight: 900; color: #ff0844; text-shadow: 0 0 10px rgba(255,8,68,0.2); margin-top: 0; text-align: center;}
+        .tier-badge-large { background: linear-gradient(135deg, #00f2fe, #4facfe); padding: 8px; border-radius: 8px; color: white; text-align: center; font-weight: 900; font-size: 1.1rem; margin: 5px 0; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.3);}
 
-        .editor-container { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); transition: all 0.3s ease;}
-        .editor-header { background: rgba(255, 255, 255, 0.6); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.5); font-family: 'Fira Code', monospace; font-weight: 800; color: #4a5568;}
+        .workspace { display: flex; flex-direction: column; gap: 15px; }
+        
+        .directive-box { background: rgba(255, 255, 255, 0.6); border-left: 5px solid #b224ef; padding: 15px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
+        .directive-title { font-weight: 900; color: #b224ef; font-size: 1rem; margin-bottom: 5px; text-transform: uppercase; }
+        .directive-desc { font-family: 'Fira Code', monospace; font-size: 0.95rem; color: #1a202c; font-weight: 700; line-height: 1.4;}
+        .directive-params { margin-top: 8px; font-family: 'Fira Code', monospace; color: #fa709a; font-weight: 900; font-size: 0.85rem;}
+
+        .editor-container { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,1); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: all 0.3s ease;}
+        .editor-header { background: rgba(255, 255, 255, 0.8); padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.8); font-family: 'Fira Code', monospace; font-weight: 800; color: #4a5568; font-size: 0.9rem;}
         .editor-wrapper { display: flex; position: relative; }
         
-        .line-numbers { background: rgba(255,255,255,0.3); color: #718096; padding: 15px 10px; font-family: 'Fira Code', monospace; font-size: 1.1rem; text-align: right; user-select: none; border-right: 1px solid rgba(255,255,255,0.5); width: 40px; box-sizing: border-box; font-weight: bold;}
-        .code-input { flex: 1; background: transparent; border: none; padding: 15px; color: #1a202c; font-family: 'Fira Code', monospace; font-size: 1.1rem; line-height: 1.5; outline: none; resize: none; min-height: 280px; font-weight: 700; tab-size: 4;}
+        .line-numbers { background: rgba(255,255,255,0.4); color: #718096; padding: 12px 10px; font-family: 'Fira Code', monospace; font-size: 1rem; text-align: right; user-select: none; border-right: 1px solid rgba(255,255,255,0.8); width: 40px; box-sizing: border-box; font-weight: bold;}
+        .code-input { flex: 1; background: transparent; border: none; padding: 12px; color: #1a202c; font-family: 'Fira Code', monospace; font-size: 1rem; line-height: 1.5; outline: none; resize: none; min-height: 220px; font-weight: 700; tab-size: 4;}
         
-        .stdout-terminal { background: rgba(26, 32, 44, 0.85); border-top: 2px solid #4facfe; padding: 15px; height: 130px; overflow-y: auto; font-family: 'Fira Code', monospace; font-size: 0.9rem; display: flex; flex-direction: column; gap: 6px; color: #a0aec0;}
+        .stdout-terminal { background: rgba(26, 32, 44, 0.9); border-top: 2px solid #4facfe; padding: 12px; height: 100px; overflow-y: auto; font-family: 'Fira Code', monospace; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; color: #a0aec0;}
         .log-sys { color: #00f2fe; }
         .log-success { color: #43e97b; font-weight: bold; text-shadow: 0 0 5px rgba(67, 233, 123, 0.4);}
         .log-err { color: #ff0844; font-weight: bold; text-shadow: 0 0 5px rgba(255, 8, 68, 0.4);}
 
-        .action-btn { background: rgba(255,255,255,0.4); border: 2px solid; padding: 12px 25px; border-radius: 10px; font-family: 'Fira Code', monospace; font-weight: 900; cursor: pointer; transition: all 0.2s; width: 100%;}
-        .btn-cyan { border-color: #4facfe; color: #0f4c75; } .btn-cyan:hover { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);}
-        .btn-pink { border-color: #fa709a; color: #5c182d; margin-top: 10px;} .btn-pink:hover { background: linear-gradient(135deg, #fa709a, #fee140); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(250, 112, 154, 0.4);}
-        .btn-compile { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0f3e22; border: none; padding: 15px; font-size: 1.2rem; box-shadow: 0 5px 15px rgba(67, 233, 123, 0.3);}
-        .btn-compile:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(67, 233, 123, 0.5); color: #0f3e22;}
+        .action-btn { background: rgba(255,255,255,0.8); border: 2px solid; padding: 10px 20px; border-radius: 10px; font-family: 'Fira Code', monospace; font-weight: 900; cursor: pointer; transition: all 0.2s; width: 100%; font-size: 0.9rem;}
+        .btn-cyan { border-color: #4facfe; color: #0f4c75; } .btn-cyan:hover { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);}
+        .btn-pink { border-color: #fa709a; color: #5c182d;} .btn-pink:hover { background: linear-gradient(135deg, #fa709a, #fee140); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(250, 112, 154, 0.4);}
+        .btn-compile { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0f3e22; border: none; padding: 12px; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(67, 233, 123, 0.3);}
+        .btn-compile:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(67, 233, 123, 0.5); }
 
-        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; transition: all 0.3s ease; font-size: 0.85rem; }
-        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; transform: translateY(-2px); }
+        .fallback-btn { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,1); padding: 8px 18px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; transition: all 0.3s ease; font-size: 0.85rem; }
+        .fallback-btn:hover { background: #ff0844; color: white; border-color: transparent; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 8, 68, 0.3);}
 
-        @keyframes wrongShake { 0%, 100% { transform: translateX(0); box-shadow: 0 0 0 transparent; } 20%, 60% { transform: translateX(-10px); box-shadow: 0 0 30px rgba(255,8,68,0.4); } 40%, 80% { transform: translateX(10px); box-shadow: 0 0 30px rgba(255,8,68,0.4); } }
-        @keyframes correctFlash { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 transparent; } 50% { transform: scale(1.02); box-shadow: 0 0 40px #43e97b, inset 0 0 20px #43e97b; } }
+        @keyframes wrongShake { 0%, 100% { transform: translateX(0); box-shadow: 0 5px 15px rgba(0,0,0,0.05); } 20%, 60% { transform: translateX(-8px); box-shadow: 0 0 20px rgba(255,8,68,0.3); border-color: #ff0844; } 40%, 80% { transform: translateX(8px); box-shadow: 0 0 20px rgba(255,8,68,0.3); border-color: #ff0844; } }
+        @keyframes correctFlash { 0%, 100% { transform: scale(1); box-shadow: 0 5px 15px rgba(0,0,0,0.05); } 50% { transform: scale(1.02); box-shadow: 0 0 30px #43e97b, inset 0 0 15px rgba(67, 233, 123, 0.3); border-color: #43e97b; } }
 
-        .shake-error { animation: wrongShake 0.4s ease-in-out; border-color: #ff0844 !important; }
-        .glow-success { animation: correctFlash 0.6s ease-out; border-color: #43e97b !important; }
+        .shake-error { animation: wrongShake 0.4s ease-in-out; }
+        .glow-success { animation: correctFlash 0.6s ease-out; }
 
-        @media (max-width: 900px) { .ide-wrapper { grid-template-columns: 1fr; } .telemetry-box { flex-direction: row; flex-wrap: wrap; justify-content: center; text-align: center;} .timer-display {font-size: 2rem;} }
+        @media (max-width: 900px) { .ide-wrapper { grid-template-columns: 1fr; } .telemetry-box { flex-direction: row; flex-wrap: wrap; justify-content: center; text-align: center;} .timer-display {font-size: 1.8rem;} }
     </style>
 </head>
 <body>
@@ -84,8 +85,8 @@
         </div>
 
         <div class="glass-panel" style="text-align: center;">
-            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-terminal" style="color: #4facfe;"></i> TERMINAL ESCAPE IDE</h2>
-            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Write compile-ready source code from scratch to break through 50 procedural security tiers.</p>
+            <h2><i class="fa-solid fa-terminal" style="color: #4facfe;"></i> TERMINAL ESCAPE IDE</h2>
+            <p>> Write compile-ready source code from scratch to break through 50 procedural security tiers.</p>
         </div>
 
         <div class="ide-wrapper">
@@ -98,7 +99,7 @@
                 
                 <div id="tier-val" class="tier-badge-large">TIER 1 / 50</div>
 
-                <div style="display: flex; justify-content: space-around; text-align: center; margin: 10px 0;">
+                <div style="display: flex; justify-content: space-around; text-align: center; margin: 5px 0;">
                     <div>
                         <div class="status-label">HIGHEST</div>
                         <div class="status-val" id="best-tier-val" style="color: #fa709a;">0</div>
@@ -109,9 +110,9 @@
                     </div>
                 </div>
 
-                <div style="text-align: center; margin-bottom: 10px;">
+                <div style="text-align: center; margin-bottom: 5px;">
                     <div class="status-label">STATUS</div>
-                    <div class="status-val" id="compile-status-val" style="color: #4a5568; font-size: 1.2rem;">AWAITING CODE</div>
+                    <div class="status-val" id="compile-status-val" style="color: #4a5568; font-size: 1.1rem;">AWAITING CODE</div>
                 </div>
 
                 <button class="action-btn btn-cyan" onclick="pullFreshQuestion()">PULL FRESH ASSIGNMENT</button>
@@ -151,8 +152,8 @@
 
     </div>
 
-    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.4); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 3000;">
-        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6); background: rgba(255,255,255,0.9); border-radius: 16px;">
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.4); backdrop-filter: blur(25px); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 1); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2);">
             <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900;"><i class="fa-solid fa-unlock-keyhole"></i> ESCAPED!</h2>
             <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">All 50 progressive security tiers shattered.<br>You are a Kernel Master.</p>
             <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c; border: none; padding: 15px 35px; font-size: 1.1rem;" onclick="window.location.href='index.html'">RETURN TO OS HUB</button>
@@ -164,7 +165,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- MULTI-LANGUAGE DYNAMIC CONFIGURATION ---
             const LangConfig = {
                 c: { name: "C", print: "printf", ext: "c", boilerplate: "#include <stdio.h>\n\nint main() {\n    // Implementation logic\n    \n    return 0;\n}", checkRegex: /printf/ },
                 cpp: { name: "C++", print: "cout", ext: "cpp", boilerplate: "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Implementation logic\n    \n    return 0;\n}", checkRegex: /cout|printf/ },
@@ -179,11 +179,9 @@
             const currentLang = LangConfig[requestedLang] ? requestedLang : 'python';
             const conf = LangConfig[currentLang];
 
-            // Set UI specific to the selected language
             document.getElementById('ui-env').innerText = `${conf.name.toUpperCase()} MAINFRAME`;
             document.getElementById('file-name').innerText = `main.${conf.ext}`;
 
-            // Save state keys Isolated by language!
             const saveKeyTier = `mb_escape_tier_${currentLang}`;
             const saveKeyLines = `mb_escape_lines_${currentLang}`;
             const saveKeyCode = `mb_escape_code_${currentLang}`;
@@ -192,7 +190,6 @@
             const getPrintKw = () => conf.print;
             const getLangName = () => conf.name;
 
-            // --- 50-TIER PROCEDURAL UNIVERSAL DATABASE ---
             const masterTierDatabase = [
                 { t: 1, name: "Basic Summation", gen: () => { let a = Math.floor(Math.random()*50)+1; let b = Math.floor(Math.random()*50)+1; return { desc: `Write a complete ${getLangName()} program that declares two integers with values ${a} and ${b}, calculates their sum, and prints ONLY the resulting sum integer.`, p: `Values: a = ${a}, b = ${b}`, verify: (code) => { let sum = a + b; return checkUniversalOutput(code, sum.toString(), ["+", getPrintKw()]); }, hint: `Declare integers, add them, and use ${getPrintKw()} to output.` }; }},
                 { t: 2, name: "Variable Multiplication", gen: () => { let x = Math.floor(Math.random()*12)+2; let y = Math.floor(Math.random()*12)+2; return { desc: `Write complete ${getLangName()} code to multiply the integers ${x} and ${y}. Print exactly the final product integer to stdout.`, p: `Values: x = ${x}, y = ${y}`, verify: (code) => { let prod = x * y; return checkUniversalOutput(code, prod.toString(), ["*", getPrintKw()]); }, hint: `Multiply using the * operator and output via ${getPrintKw()}.` }; }},
@@ -205,31 +202,8 @@
                 { t: 9, name: "Simple Loop Accumulator", gen: () => { let lim = Math.floor(Math.random()*5)+4; let total = 0; for(let i=1; i<=lim; i++) total += i; return { desc: `Write a complete ${getLangName()} loop that adds all integers from 1 up to ${lim} inclusive. Print ONLY the final sum.`, p: `Limit: ${lim}`, verify: (code) => { return checkUniversalOutput(code, total.toString(), ["+", getPrintKw()]); }, hint: "Use a loop accumulating into a sum variable." }; }},
                 { t: 10, name: "Factorial Engine", gen: () => { let f = Math.floor(Math.random()*4)+3; let fact = 1; for(let i=1; i<=f; i++) fact *= i; return { desc: `Write complete ${getLangName()} code to calculate the factorial of ${f} (${f}!). Output exactly the final calculated factorial value.`, p: `Factorial Target: ${f}`, verify: (code) => { return checkUniversalOutput(code, fact.toString(), ["*", getPrintKw()]); }, hint: "Initialize fact = 1, loop from 1 to f multiplying fact." }; }},
                 
-                { t: 11, name: "Array Index Access", gen: () => { let arr = [Math.floor(Math.random()*50), Math.floor(Math.random()*50), Math.floor(Math.random()*50)]; let idx = Math.floor(Math.random()*3); return { desc: `Write a ${getLangName()} program that initializes an array/list containing exactly {${arr.join(', ')}}. Access and print the element stored at index ${idx}.`, p: `Target Index: ${idx}`, verify: (code) => { return checkUniversalOutput(code, arr[idx].toString(), ["[", "]", getPrintKw()]); }, hint: `Arrays are zero-indexed. Access using arr[idx].` }; }},
-                { t: 12, name: "Array Summation", gen: () => { let arr = [Math.floor(Math.random()*10)+1, Math.floor(Math.random()*10)+1, Math.floor(Math.random()*10)+1]; let sum = arr.reduce((a,b)=>a+b,0); return { desc: `Write full ${getLangName()} code initializing an array/list with values {${arr.join(', ')}}. Loop through, add the elements, and print the total sum.`, p: `Payload: {${arr.join(', ')}}`, verify: (code) => { return checkUniversalOutput(code, sum.toString(), ["[", "+", getPrintKw()]); }, hint: "Loop through the indices accumulating the values." }; }},
-                { t: 13, name: "Variable Reassignment", gen: () => { let val1 = Math.floor(Math.random()*50); let val2 = Math.floor(Math.random()*50); return { desc: `Write a complete ${getLangName()} program that initializes a variable to ${val1}, reassigns it to ${val2}, and prints the final value.`, p: `Initial: ${val1}, Reassign: ${val2}`, verify: (code) => { return checkUniversalOutput(code, val2.toString(), ["=", getPrintKw()]); }, hint: "Declare, overwrite, then print." }; }},
-                { t: 14, name: "Countdown Loop", gen: () => { return { desc: `Write complete ${getLangName()} code with a loop that counts down from 3 to 1, and prints 'GO' when finished.`, p: `Sequence: 3, 2, 1, GO`, verify: (code) => { return checkUniversalOutput(code, "GO", ["-", getPrintKw()]); }, hint: "Loop backwards and print GO outside the loop." }; }},
-                { t: 15, name: "Multiples Sum", gen: () => { return { desc: `Write full ${getLangName()} code that sums all multiples of 5 between 1 and 20. Print the final sum.`, p: `Target: Multiples of 5`, verify: (code) => { return checkUniversalOutput(code, "50", ["+", getPrintKw()]); }, hint: "5 + 10 + 15 + 20 = 50." }; }},
-                { t: 16, name: "Square Square-Root Evaluator", gen: () => { let s = Math.floor(Math.random()*10)+3; let sq = s * s; return { desc: `Write full ${getLangName()} code that calculates the square of the integer ${s}. Output the calculated result.`, p: `Value: ${s}`, verify: (code) => { return checkUniversalOutput(code, sq.toString(), ["*", getPrintKw()]); }, hint: "Multiply s * s and commit to standard output." }; }},
-                { t: 17, name: "Divisibility Check", gen: () => { let val = Math.floor(Math.random()*50)+20; let isDiv = val % 3 === 0; return { desc: `Write a program that evaluates if ${val} is perfectly divisible by 3. Print 'YES' if true, or 'NO'.`, p: `Input: ${val}`, verify: (code) => { return checkUniversalOutput(code, isDiv ? "YES" : "NO", ["%", "if", getPrintKw()]); }, hint: "Check if val % 3 == 0." }; }},
-                { t: 18, name: "Array Average", gen: () => { let arr = [10, 20, 30, 40]; let avg = 25; return { desc: `Write full ${getLangName()} logic declaring a list {10, 20, 30, 40}. Calculate and print the numeric average.`, p: `Payload: {10, 20, 30, 40}`, verify: (code) => { return checkUniversalOutput(code, avg.toString(), ["/", getPrintKw()]); }, hint: "Sum the elements and divide by 4." }; }},
-                { t: 19, name: "Leap Year Evaluator", gen: () => { let yrs = [2024, 2026, 2028, 2030]; let yr = yrs[Math.floor(Math.random()*yrs.length)]; let isLeap = (yr % 4 === 0 && yr % 100 !== 0) || (yr % 400 === 0); return { desc: `Write complete ${getLangName()} code evaluating if the year ${yr} is a leap year. Print exactly 'LEAP' if true, or 'STANDARD' if false.`, p: `Year: ${yr}`, verify: (code) => { let exp = isLeap ? "LEAP" : "STANDARD"; return checkUniversalOutput(code, exp, ["if", "%", getPrintKw()]); }, hint: "Check mod 4, mod 100, and mod 400 rules." }; }},
-                { t: 20, name: "Bitwise AND Operation", gen: () => { let b1 = Math.floor(Math.random()*15)+5; let b2 = Math.floor(Math.random()*15)+5; let res = b1 & b2; return { desc: `Write complete ${getLangName()} code calculating the bitwise AND (&) output between ${b1} and ${b2}. Print the numeric result.`, p: `Inputs: ${b1}, ${b2}`, verify: (code) => { return checkUniversalOutput(code, res.toString(), ["&", getPrintKw()]); }, hint: "Use the bitwise & operator." }; }},
-                
-                { t: 21, name: "Bitwise OR Gate", gen: () => { let n1 = 12; let n2 = 10; let res = n1 | n2; return { desc: `Write full ${getLangName()} code calculating the bitwise OR (|) between 12 and 10. Output the numeric integer result.`, p: `Inputs: 12, 10`, verify: (code) => checkUniversalOutput(code, res.toString(), ["|", getPrintKw()]), hint: "Use the bitwise | operator." }; }},
-                { t: 22, name: "Bitwise XOR Gate", gen: () => { let x = 9; let y = 5; let res = x ^ y; return { desc: `Write full ${getLangName()} code calculating the bitwise XOR (^) between 9 and 5. Print the numeric output.`, p: `Inputs: 9, 5`, verify: (code) => checkUniversalOutput(code, res.toString(), ["^", getPrintKw()]), hint: "Use the bitwise ^ operator." }; }},
-                { t: 23, name: "Bitwise Left Shift", gen: () => { let val = Math.floor(Math.random()*5)+2; let shift = Math.floor(Math.random()*2)+1; let res = val << shift; return { desc: `Write complete ${getLangName()} logic shifting the integer ${val} left by ${shift} bits (<<). Print the resulting value.`, p: `Value: ${val}, Shift: ${shift}`, verify: (code) => checkUniversalOutput(code, res.toString(), ["<<", getPrintKw()]), hint: "Use val << shift." }; }},
-                { t: 24, name: "String Length Hardcode", gen: () => { let strs = ["code", "break", "kernel", "stack"]; let s = strs[Math.floor(Math.random()*strs.length)]; return { desc: `Write complete ${getLangName()} code declaring a string "${s}". Print its exact length (the integer ${s.length}).`, p: `String: "${s}"`, verify: (code) => checkUniversalOutput(code, s.length.toString(), [getPrintKw()]), hint: "Just output the integer length of the string." }; }},
-                { t: 25, name: "Vowel Scanner", gen: () => { let ch = ['E','O','X','Z'][Math.floor(Math.random()*4)]; let isV = ['E','O'].includes(ch); return { desc: `Write full source code evaluating if the character '${ch}' is a vowel. Print exactly 'VOWEL' or 'CONSONANT'.`, p: `Input: '${ch}'`, verify: (code) => checkUniversalOutput(code, isV ? "VOWEL" : "CONSONANT", ["if", getPrintKw()]), hint: "Check if it matches A, E, I, O, or U." }; }},
-                { t: 26, name: "Absolute Value", gen: () => { let neg = -(Math.floor(Math.random()*50)+10); let abs = -neg; return { desc: `Write a program that calculates and prints the absolute positive value of the negative integer ${neg}.`, p: `Input: ${neg}`, verify: (code) => checkUniversalOutput(code, abs.toString(), [getPrintKw()]), hint: "Multiply by -1 or use an absolute function." }; }},
-                { t: 27, name: "Nested Loop Simulation", gen: () => { return { desc: `Write complete ${getLangName()} code that prints exactly the number '7777'.`, p: `Target Output: '7777'`, verify: (code) => checkUniversalOutput(code, "7777", [getPrintKw()]), hint: "Just print the required string." }; }},
-                { t: 28, name: "Array Search", gen: () => { let target = 45; return { desc: `Write full ${getLangName()} code initializing an array {15, 30, 45, 60}. Find value ${target} and print exactly its matching index (2).`, p: `Target Value: ${target}`, verify: (code) => checkUniversalOutput(code, "2", [getPrintKw()]), hint: "The index is 2." }; }},
-                { t: 29, name: "Array Min Element", gen: () => { return { desc: `Write full ${getLangName()} logic initializing an array {88, 42, 99, 12, 55}. Find and print the minimum integer (12).`, p: `Payload: {88, 42, 99, 12, 55}`, verify: (code) => checkUniversalOutput(code, "12", [getPrintKw()]), hint: "Print 12." }; }},
-                { t: 30, name: "Array Max Element", gen: () => { return { desc: `Write full ${getLangName()} logic initializing an array {5, 95, 33, 102, 40}. Find and print the maximum integer (102).`, p: `Payload: {5, 95, 33, 102, 40}`, verify: (code) => checkUniversalOutput(code, "102", [getPrintKw()]), hint: "Print 102." }; }},
-                
-                // Fallback procedural logic for tiers 31-50
-                ...Array(20).fill(null).map((_, i) => {
-                    let currentTier = 31 + i;
+                ...Array(40).fill(null).map((_, i) => {
+                    let currentTier = 11 + i;
                     return {
                         t: currentTier,
                         name: `Mainframe Challenge Tier ${currentTier}`,
@@ -246,21 +220,16 @@
                 })
             ];
 
-            // Universal Verification Engine
             function checkUniversalOutput(code, expectedString, requiredKeywords) {
                 for(let kw of requiredKeywords) {
                     let escapedKw = escapeRegex(kw);
                     const kwRegex = new RegExp(escapedKw, 'i');
                     if(!kwRegex.test(code)) return { ok: false, err: `COMPILATION FAULT: Required syntax [${kw}] missing from source stream.` };
                 }
-                
-                if(!code.includes(expectedString)) {
-                    return { ok: false, err: `EXECUTION FAULT: Evaluated output does not match expected exact value: [${expectedString}].` };
-                }
+                if(!code.includes(expectedString)) return { ok: false, err: `EXECUTION FAULT: Evaluated output does not match expected exact value: [${expectedString}].` };
                 return { ok: true, out: expectedString };
             }
 
-            // --- IDE STATE & LOGIC ---
             let activeTierIndex = 0; 
             let activeQuestionObj = null;
             let totalLinesWritten = 0;
@@ -369,23 +338,16 @@
                 logConsole(`Pulled randomized requirements for Tier ${targetTierMeta.t}.`, "sys");
             }
 
-            function triggerEditorAnim(animClass) {
-                editorBox.classList.remove('shake-error', 'glow-success');
-                void editorBox.offsetWidth; 
-                editorBox.classList.add(animClass);
-            }
-
             window.compileAndExecute = function() {
                 if(!activeQuestionObj) return;
 
                 const codePayload = elInput.value.trim();
                 
-                // Baseline check to ensure they are using the correct language commands!
                 if (!conf.checkRegex.test(codePayload)) {
                     if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
                     elStatus.innerText = "SYNTAX FAULT"; elStatus.style.color = "#ff0844";
                     logConsole(`FATAL SYNTAX FAULT: Code missing fundamental ${conf.name} structure (e.g., '${conf.print}').`, "err");
-                    triggerEditorAnim('shake-error');
+                    editorBox.classList.remove('shake-error'); void editorBox.offsetWidth; editorBox.classList.add('shake-error');
                     return;
                 }
 
@@ -395,52 +357,41 @@
                 savePersistentData();
 
                 logConsole("Parsing syntax trees... evaluating register headers...", "sys");
-                elStatus.innerText = "COMPILING...";
-                elStatus.style.color = "#fa709a";
+                elStatus.innerText = "COMPILING..."; elStatus.style.color = "#b224ef";
 
                 setTimeout(() => {
-                    let verifyResult = { ok: false, err: "CRITICAL: Compiler unhandled exception caught." };
-                    try { verifyResult = activeQuestionObj.verify(codePayload); } catch(err) { verifyResult = { ok: false, err: `CRITICAL PARSER EXCEPTION: ${err.message}` }; }
+                    let verifyResult;
+                    try { verifyResult = activeQuestionObj.verify(codePayload); } catch(err) { verifyResult = { ok: false, err: `CRITICAL EXCEPTION: ${err.message}` }; }
 
                     if(verifyResult.ok) {
                         if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('success');
                         elStatus.innerText = "COMPILED SAFELY"; elStatus.style.color = "#43e97b";
-                        logConsole(`EXECUTION VERIFIED: Code output exact expected stream: [${verifyResult.out}].`, "success");
-                        triggerEditorAnim('glow-success');
+                        logConsole(`EXECUTION VERIFIED: Output matched exact expected stream: [${verifyResult.out}].`, "success");
+                        editorBox.classList.remove('glow-success'); void editorBox.offsetWidth; editorBox.classList.add('glow-success');
                         
                         setTimeout(() => {
                             if(activeTierIndex < masterTierDatabase.length - 1) {
-                                activeTierIndex++;
-                                savePersistentData();
-                                window.pullFreshQuestion();
-                                window.injectBoilerplate(); 
+                                activeTierIndex++; savePersistentData(); window.pullFreshQuestion(); window.injectBoilerplate(); 
                             } else {
                                 savePersistentData();
-                                if(typeof AudioEngine !== 'undefined') {
-                                    AudioEngine.playSound('success');
-                                    AudioEngine.saveProgress('Mainframe', 'Tier 50');
-                                }
-                                clearInterval(timerInterval);
-                                document.getElementById('victory-modal').style.display = 'flex';
+                                if(typeof AudioEngine !== 'undefined') { AudioEngine.playSound('victory'); AudioEngine.saveProgress('Terminal Escape', 'Cleared'); }
+                                clearInterval(timerInterval); document.getElementById('victory-modal').style.display = 'flex';
                             }
-                        }, 1400);
-
+                        }, 1200);
                     } else {
                         if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('error');
                         elStatus.innerText = "RUNTIME FAULT"; elStatus.style.color = "#ff0844";
                         logConsole(verifyResult.err, "err");
-                        triggerEditorAnim('shake-error');
+                        editorBox.classList.remove('shake-error'); void editorBox.offsetWidth; editorBox.classList.add('shake-error');
                     }
-                }, 500);
+                }, 400);
             }
 
             window.scanHint = function() {
                 if(typeof AudioEngine !== 'undefined') AudioEngine.playSound('click');
-                if(!activeQuestionObj) return;
-                logConsole(`HINT UPLINK: ${activeQuestionObj.hint}`, "sys");
+                if(activeQuestionObj) logConsole(`HINT UPLINK: ${activeQuestionObj.hint}`, "sys");
             }
 
-            // Init
             loadPersistentData();
             window.updateEditorLines();
             window.pullFreshQuestion();

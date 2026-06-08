@@ -38,6 +38,16 @@
         
         .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 900; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.9rem; }
         .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
+
+        /* ==========================================
+           --- COMPACT LAPTOP SCREEN FIX ---
+           ========================================== */
+        #game-container { margin: 10px auto !important; padding: 0 15px 15px 15px !important; }
+        .game-header { margin-bottom: 10px !important; }
+        .glass-panel, .glass-card { padding: 15px 25px !important; margin-bottom: 15px !important; }
+        h2, .module-title { margin-top: 0 !important; margin-bottom: 5px !important; font-size: 1.5rem !important; }
+        p, .module-desc { margin-bottom: 5px !important; }
+        .telemetry-box { padding: 15px !important; gap: 10px !important; }
     </style>
 </head>
 <body>
@@ -48,7 +58,6 @@
         <div class="game-header">
             <button class="fallback-btn" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> SYSTEM ABORT</button>
             <div class="sys-stats">
-                <!-- ADDED translate="no" to prevent browser extensions from destroying the score elements -->
                 <div class="stat-box env-badge" translate="no">ENV: <span id="ui-env">BOOTING</span></div>
                 <div class="stat-box score-badge" translate="no">PAYLOADS: <span id="ui-score">0</span> / 20</div>
             </div>
@@ -63,7 +72,6 @@
         <div class="bins-grid" id="bins-container"></div>
     </div>
 
-    <!-- Victory Modal -->
     <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.2); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
         <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6);">
             <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(67,233,123,0.4);"><i class="fa-solid fa-shield-check"></i> SECURED</h2>
@@ -72,7 +80,6 @@
         </div>
     </div>
 
-    <!-- REQUIRE AUDIO ENGINE FOR SAVE STATES -->
     <script src="audio-manager.js"></script>
 
     <script>

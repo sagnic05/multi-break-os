@@ -8,43 +8,51 @@
     <link rel="stylesheet" href="style.css"> 
     
     <style>
-        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none;}
+        body { background: #f0f4f8; background: radial-gradient(circle at top right, #fdfbfb 0%, #e2ebf0 100%); color: #2d3748; font-family: 'Inter', sans-serif; min-height: 100vh; position: relative; user-select: none; margin: 0; overflow-x: hidden;}
         .bg-shape { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -10; opacity: 0.6; pointer-events: none; }
         .shape-1 { width: 400px; height: 400px; background: #4facfe; top: -100px; left: -100px; }
         .shape-2 { width: 500px; height: 500px; background: #fa709a; bottom: -150px; right: -100px; }
         .shape-3 { width: 300px; height: 300px; background: #a18cd1; top: 30%; left: 20%; }
         
-        #game-container { max-width: 900px; margin: 40px auto; position: relative; z-index: 10; padding: 0 20px 50px 20px; }
-        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        /* Compact Laptop Layout */
+        #game-container { max-width: 900px; margin: 10px auto; position: relative; z-index: 10; padding: 0 15px 15px 15px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 15px; }
+        
         .sys-stats { display: flex; gap: 15px; font-family: 'Fira Code', monospace; font-weight: 800; color: #1a202c; flex-wrap: wrap; }
-        .stat-box { background: rgba(255,255,255,0.4); backdrop-filter: blur(15px); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.05), inset 0 0 10px rgba(255,255,255,0.4); font-size: 0.95rem; }
+        .stat-box { background: rgba(255,255,255,0.6); backdrop-filter: blur(15px); padding: 10px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,1); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.95rem; }
         
         .env-badge { color: #b224ef; border-color: rgba(178, 36, 239, 0.4);}
         .timer-badge { color: #ff0844; border-color: rgba(255, 8, 68, 0.4); transition: color 0.3s;}
         .timer-badge.danger { color: #ff0844; animation: pulseBlink 0.5s infinite; box-shadow: 0 0 15px rgba(255,8,68,0.5);}
 
-        .maze-wrapper { display: flex; justify-content: center; align-items: center; margin-top: 20px; }
-        .maze-board { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); gap: 4px; width: 100%; max-width: 500px; aspect-ratio: 1 / 1; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 16px; padding: 10px; box-shadow: 0 15px 40px rgba(31, 38, 135, 0.1), inset 0 0 20px rgba(255,255,255,0.3); }
+        .glass-panel { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,1); border-radius: 16px; padding: 15px 25px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05); margin-bottom: 10px;}
+        .glass-panel h2 { margin-top: 0; margin-bottom: 5px; font-size: 1.5rem; color: #1a202c; font-weight: 900;}
+        .glass-panel p { margin-bottom: 0; color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.9rem;}
 
-        .maze-cell { width: 100%; height: 100%; border-radius: 6px; transition: all 0.2s ease; }
+        .maze-wrapper { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
+        /* Shrunk maze board slightly to fit laptop screens */
+        .maze-board { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); gap: 3px; width: 100%; max-width: 380px; aspect-ratio: 1 / 1; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.9); border-radius: 16px; padding: 8px; box-shadow: 0 10px 30px rgba(31, 38, 135, 0.05); }
+
+        .maze-cell { width: 100%; height: 100%; border-radius: 4px; transition: all 0.2s ease; }
         .maze-cell.wall { background: rgba(26, 32, 44, 0.7); border: 1px solid rgba(0,0,0,0.3); box-shadow: inset 0 0 8px rgba(0,0,0,0.8); }
-        .maze-cell.path { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.3); }
+        .maze-cell.path { background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255,255,255,0.5); }
         .maze-cell.player { background: linear-gradient(135deg, #4facfe, #00f2fe); box-shadow: 0 0 15px #00f2fe, inset 0 0 10px rgba(255,255,255,0.8); border: 1px solid white; transform: scale(1.1); z-index: 5; position: relative; }
         .maze-cell.exit { background: linear-gradient(135deg, #43e97b, #38f9d7); box-shadow: 0 0 15px #43e97b; border: 1px solid white; animation: pulseBlink 1.5s infinite; }
 
-        .controls-wrapper { display: flex; flex-direction: column; align-items: center; margin-top: 30px; gap: 10px; }
-        .control-row { display: flex; gap: 10px; justify-content: center; }
-        .dir-btn { background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(15px); border: 2px solid rgba(255,255,255,0.8); border-bottom: 2px solid rgba(255,255,255,0.4); border-right: 2px solid rgba(255,255,255,0.4); color: #1a202c; padding: 15px 25px; border-radius: 12px; font-family: 'Fira Code', monospace; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: all 0.1s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 0 10px rgba(255,255,255,0.3); display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 120px; }
-        .dir-btn i { font-size: 1.2rem; color: #b224ef; }
+        /* Tighter controls to prevent scrolling */
+        .controls-wrapper { display: flex; flex-direction: column; align-items: center; margin-top: 15px; gap: 8px; }
+        .control-row { display: flex; gap: 8px; justify-content: center; }
+        .dir-btn { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); border: 2px solid rgba(255,255,255,1); border-bottom: 2px solid rgba(255,255,255,0.6); border-right: 2px solid rgba(255,255,255,0.6); color: #1a202c; padding: 10px 20px; border-radius: 12px; font-family: 'Fira Code', monospace; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: all 0.1s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 100px; }
+        .dir-btn i { font-size: 1.1rem; color: #b224ef; }
         .dir-btn:active, .dir-btn.active-key { transform: scale(0.95) translateY(4px); background: rgba(178, 36, 239, 0.2); box-shadow: 0 0 10px rgba(178, 36, 239, 0.3), inset 0 4px 10px rgba(0,0,0,0.1); border-color: #b224ef; }
 
-        .fallback-btn { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.8); padding: 12px 24px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.9rem; }
-        .fallback-btn:hover { background: rgba(255, 95, 86, 0.8); color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
+        .fallback-btn { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,1); padding: 8px 18px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #1a202c; position: relative; z-index: 30; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-size: 0.85rem; }
+        .fallback-btn:hover { background: #ff0844; color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(255, 95, 86, 0.3); transform: translateY(-2px); }
 
         @keyframes wallBump { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .anim-bump { animation: wallBump 0.2s ease; }
 
-        @media (max-width: 600px) { .dir-btn { min-width: 90px; padding: 10px; font-size: 0.75rem;} }
+        @media (max-width: 600px) { .dir-btn { min-width: 80px; padding: 8px; font-size: 0.75rem;} }
     </style>
 </head>
 <body>
@@ -61,9 +69,9 @@
             </div>
         </div>
 
-        <div class="glass-panel" style="text-align: center; padding: 25px;">
-            <h2 style="margin-bottom: 10px; color: #1a202c; font-size: 1.8rem; font-weight: 900;"><i class="fa-solid fa-route" style="color: #b224ef;"></i> MAZE ESCAPE</h2>
-            <p style="color: #4a5568; font-weight: 700; font-family: 'Fira Code', monospace; font-size: 0.95rem;">> Use pointer arithmetic to navigate the memory grid. Reach the green exit.</p>
+        <div class="glass-panel" style="text-align: center;">
+            <h2><i class="fa-solid fa-route" style="color: #b224ef;"></i> MAZE ESCAPE</h2>
+            <p>> Use pointer arithmetic to navigate the memory grid. Reach the green exit.</p>
         </div>
 
         <div class="maze-wrapper"><div class="maze-board" id="maze-board"></div></div>
@@ -78,24 +86,22 @@
         </div>
     </div>
 
-    <!-- Modals -->
-    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.2); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
-        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 0.8); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2), inset 0 0 30px rgba(255,255,255,0.6);">
-            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(67,233,123,0.4);"><i class="fa-solid fa-door-open"></i> ESCAPED</h2>
+    <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.4); backdrop-filter: blur(25px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid rgba(67, 233, 123, 1); box-shadow: 0 20px 60px rgba(67, 233, 123, 0.2);">
+            <h2 style="color: #43e97b; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900;"><i class="fa-solid fa-door-open"></i> ESCAPED</h2>
             <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">Memory block successfully exited.<br>Traversal secure.</p>
-            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border: none;" onclick="window.location.href='index.html'">RETURN TO OS</button>
+            <button class="fallback-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c; border: none;" onclick="window.location.href='index.html'">RETURN TO OS</button>
         </div>
     </div>
 
-    <div id="defeat-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); justify-content: center; align-items: center; z-index: 1000;">
-        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid #ff0844; box-shadow: 0 20px 60px rgba(255,8,68, 0.4), inset 0 0 30px rgba(255,8,68,0.3); background: rgba(255,255,255,0.8);">
-            <h2 style="color: #ff0844; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900; text-shadow: 0 0 15px rgba(255,8,68,0.4);"><i class="fa-solid fa-skull"></i> TIMEOUT</h2>
+    <div id="defeat-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(25px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="text-align: center; max-width: 500px; padding: 50px; border: 2px solid #ff0844; box-shadow: 0 20px 60px rgba(255,8,68, 0.4); background: rgba(255,255,255,0.9);">
+            <h2 style="color: #ff0844; font-size: 2.8rem; margin-bottom: 15px; font-weight: 900;"><i class="fa-solid fa-skull"></i> TIMEOUT</h2>
             <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 35px; font-weight: 700; font-family: 'Fira Code', monospace;">System reset triggered.<br>Pointer lost in memory.</p>
             <button class="fallback-btn" style="background: linear-gradient(135deg, #ff0844, #ffb199); color: white; border: none;" onclick="location.reload()">RETRY TRAVERSAL</button>
         </div>
     </div>
 
-    <!-- AUDIO ENGINE -->
     <script src="audio-manager.js"></script>
 
     <script>
@@ -154,11 +160,10 @@
                 gridElements[playerPos.y][playerPos.x].classList.add('player');
 
                 if (playerPos.x === exitPos.x && playerPos.y === exitPos.y) {
-                    
-                    // --- SAVE & AUDIO TRIGGER ---
-                    AudioEngine.playSound('success');
-                    AudioEngine.saveProgress('Maze Traversal', 'Cleared');
-                    
+                    if(typeof AudioEngine !== 'undefined') {
+                        AudioEngine.playSound('success');
+                        AudioEngine.saveProgress('Maze Traversal', 'Cleared');
+                    }
                     gameActive = false; clearInterval(timerInterval);
                     document.getElementById('victory-modal').style.display = 'flex';
                 }
